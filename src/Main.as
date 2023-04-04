@@ -3,20 +3,52 @@ void Main() {
     print("test");
 }
 
-void OnClickMenu() {    
+void UpdateAllBlocks() {
     bool initLib = InitializeLib();
     if(!initLib) return;
 
-    auto blocks = FindAllBlocksInEditorInventory();
-    // for(uint i = 0; i < blocks.Length; i++) {
-    //     print(blocks[i].blockFolder + ": " + blocks[i].block.Name);
-    // }
-    print(blocks.Length + " blocks found");
+    blocks = FindAllBlocksInEditorInventory();
 }
 
 void RenderMenu() {
-    if (UI::MenuItem("Blocks To Items", "", false, true)) {
-        OnClickMenu();
+    if (UI::MenuItem("Blocks To Items", "", windowOpen, true)) {
+        windowOpen = !windowOpen;
+    }
+}
+
+void RenderInterface() {
+    if (windowOpen && UI::Begin("Blocks To Items", windowOpen)) {
+        UI::Text("Total blocks: " + blocks.Length);
+        if (UI::Button("Refresh blocks")) {
+            UpdateAllBlocks();
+        }
+        UI::SameLine();
+        if (UI::Button("Reset blocks")) {
+            blocks = {};
+        }
+
+        if (UI::BeginTable("blocks", 4)) {
+            UI::TableSetupColumn("", UI::TableColumnFlags::WidthFixed | UI::TableColumnFlags::NoSort);
+            UI::TableSetupColumn("Blacklist", UI::TableColumnFlags::WidthFixed);
+            UI::TableSetupColumn("Exported", UI::TableColumnFlags::WidthFixed);
+            UI::TableSetupColumn("Block Name", UI::TableColumnFlags::WidthFixed);    
+            UI::TableHeadersRow();
+            for (uint i = 0; i < blocks.Length; i++) {
+                UI::TableNextRow();
+                UI::TableSetColumnIndex(0);
+                if (UI::Button("Export" + "###" + i)) {
+                    print("Exporting " + blocks[i].block.Name);
+                }
+                UI::TableSetColumnIndex(1);
+                UI::Text("no");
+                UI::TableSetColumnIndex(2);
+                UI::Text("no");
+                UI::TableSetColumnIndex(3);
+                UI::Text(blocks[i].block.Name);
+            }
+            UI::EndTable();
+        }
+        UI::End();
     }
 }
 
@@ -24,6 +56,9 @@ Import::Library@ lib = null;
 Import::Function@ clickFun = null;
 Import::Function@ mousePosFun = null;
 Import::Function@ justClickFun = null;
+
+bool windowOpen = true;
+array<BlockInfo> blocks;
 
 // blacklist include terms, these cause crashes
 string[] blacklist = {"GateSpecialTurbo", "GateSpecialBoost"};
