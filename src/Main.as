@@ -1,5 +1,23 @@
 void Main() {
-    CreateBlockItems();
+    // CreateBlockItems();
+    print("test");
+}
+
+void OnClickMenu() {    
+    bool initLib = InitializeLib();
+    if(!initLib) return;
+
+    auto blocks = FindAllBlocksInEditorInventory();
+    // for(uint i = 0; i < blocks.Length; i++) {
+    //     print(blocks[i].blockFolder + ": " + blocks[i].block.Name);
+    // }
+    print(blocks.Length + " blocks found");
+}
+
+void RenderMenu() {
+    if (UI::MenuItem("Blocks To Items", "", false, true)) {
+        OnClickMenu();
+    }
 }
 
 Import::Library@ lib = null;
@@ -15,13 +33,81 @@ int count = 0;
 int screenWidth = 1;
 int screenHeight = 1;
 
-void CreateBlockItems() {
-    @lib = GetZippedLibrary("lib/libclick.dll");
-    if(lib !is null) {
-        @clickFun = lib.GetFunction("clickPos");
-        @justClickFun = lib.GetFunction("click");
-        @mousePosFun = lib.GetFunction("moveMouse");
+class BlockInfo {
+    CGameCtnBlockInfo@ block;
+    string blockFolder;
+    string blockFilePath;
+
+    BlockInfo() {}
+    BlockInfo(CGameCtnBlockInfo@ block, string blockFolder, string blockFilePath) {
+        @this.block = block;
+        this.blockFolder = blockFolder;
+        this.blockFilePath = blockFilePath;
     }
+}
+
+bool InitializeLib() {
+    @lib = GetZippedLibrary("lib/libclick.dll");
+
+    if (lib is null) {
+        warn("libclick.dll not found, exiting");
+        return false;
+    }
+
+    @clickFun = lib.GetFunction("clickPos");
+    @justClickFun = lib.GetFunction("click");
+    @mousePosFun = lib.GetFunction("moveMouse");
+    return true;
+}
+
+array<BlockInfo> FindAllBlocksInEditorInventory()
+{
+    auto app = GetApp();
+    auto editor = cast<CGameCtnEditorCommon@>(app.Editor);
+    auto pmt = editor.PluginMapType;
+    auto inventory = pmt.Inventory;
+    
+    auto blocksNode = cast<CGameCtnArticleNodeDirectory@>(inventory.RootNodes[0]);
+    auto blocks = FindAllBlocks(blocksNode);
+    return blocks;
+}
+
+array<BlockInfo> FindAllBlocks(CGameCtnArticleNodeDirectory@ parentNode, string folder = "")
+{
+    array<BlockInfo> blocks;
+    for(uint i = 0; i < parentNode.ChildNodes.Length; i++) {
+        auto node = parentNode.ChildNodes[i];
+        if(node.IsDirectory) {
+            auto childBlocks = FindAllBlocks(cast<CGameCtnArticleNodeDirectory@>(node), folder + node.Name + '/');
+            for(uint j = 0; j < childBlocks.Length; j++) {
+                blocks.InsertLast(childBlocks[j]);
+            }
+        } else {
+            auto ana = cast<CGameCtnArticleNodeArticle@>(node);
+            if(ana.Article is null || ana.Article.IdName.ToLower().EndsWith("customblock")) {
+                warn("Block: " + ana.Name + " is not nadeo, skipping");
+                continue;
+            }
+
+            auto block = cast<CGameCtnBlockInfo@>(ana.Article.LoadedNod);
+            if(block is null) {
+                warn("Block " + ana.Name + " is null!");
+                continue;
+            }
+
+            string blockFolder = folder + ana.Name;
+            string blockFilePath = 'Nadeo/' + blockFolder + '.Item.Gbx';
+
+            auto blockInfo = BlockInfo(block, blockFolder, blockFilePath);
+            blocks.InsertLast(blockInfo);
+        }
+    }
+    return blocks;
+}
+
+void CreateBlockItems() {
+    bool initLib = InitializeLib();
+    if(!initLib) return;
 
     screenHeight = Draw::GetHeight();
     screenWidth = Draw::GetWidth();
