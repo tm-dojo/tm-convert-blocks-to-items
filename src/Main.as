@@ -27,11 +27,13 @@ void RenderInterface() {
             blocks = {};
         }
 
-        if (UI::BeginTable("blocks", 4)) {
+        if (UI::BeginTable("blocks", 6)) {
             UI::TableSetupColumn("", UI::TableColumnFlags::WidthFixed | UI::TableColumnFlags::NoSort);
             UI::TableSetupColumn("Blacklist", UI::TableColumnFlags::WidthFixed);
             UI::TableSetupColumn("Exported", UI::TableColumnFlags::WidthFixed);
-            UI::TableSetupColumn("Block Name", UI::TableColumnFlags::WidthFixed);    
+            UI::TableSetupColumn("Block Name", UI::TableColumnFlags::WidthFixed);   
+            UI::TableSetupColumn("Block Item Path", UI::TableColumnFlags::WidthFixed);   
+            UI::TableSetupColumn("Block File Export Path", UI::TableColumnFlags::WidthFixed);    
             UI::TableHeadersRow();
             for (uint i = 0; i < blocks.Length; i++) {
                 UI::TableNextRow();
@@ -45,6 +47,10 @@ void RenderInterface() {
                 UI::Text("no");
                 UI::TableSetColumnIndex(3);
                 UI::Text(blocks[i].block.Name);
+                UI::TableSetColumnIndex(4);
+                UI::Text(blocks[i].blockItemPath);
+                UI::TableSetColumnIndex(5);
+                UI::Text(blocks[i].blockFileExportPath);
             }
             UI::EndTable();
         }
@@ -58,7 +64,7 @@ Import::Function@ mousePosFun = null;
 Import::Function@ justClickFun = null;
 
 bool windowOpen = true;
-array<BlockInfo> blocks;
+array<BlockExportData> blocks;
 
 // blacklist include terms, these cause crashes
 string[] blacklist = {"GateSpecialTurbo", "GateSpecialBoost"};
@@ -68,16 +74,26 @@ int count = 0;
 int screenWidth = 1;
 int screenHeight = 1;
 
-class BlockInfo {
+string GetBlockItemPath(string blockFolder) {
+    return 'Nadeo/' + blockFolder + '.Item.Gbx';
+}
+
+string GetBlockFilePath(string blockItemPath) {
+    return IO::FromStorageFolder("Exports/" + blockItemPath);
+}
+
+class BlockExportData {
     CGameCtnBlockInfo@ block;
     string blockFolder;
-    string blockFilePath;
+    string blockItemPath;
+    string blockFileExportPath;
 
-    BlockInfo() {}
-    BlockInfo(CGameCtnBlockInfo@ block, string blockFolder, string blockFilePath) {
+    BlockExportData() {}
+    BlockExportData(CGameCtnBlockInfo@ block, string blockFolder) {
         @this.block = block;
         this.blockFolder = blockFolder;
-        this.blockFilePath = blockFilePath;
+        this.blockItemPath = GetBlockItemPath(blockFolder);
+        this.blockFileExportPath = GetBlockFilePath(this.blockItemPath);
     }
 }
 
@@ -95,21 +111,41 @@ bool InitializeLib() {
     return true;
 }
 
-array<BlockInfo> FindAllBlocksInEditorInventory()
+array<BlockExportData> FindAllBlocksInEditorInventory()
 {
     auto app = GetApp();
+    if (app is null) {
+        warn("app is null");
+        return {};
+    }
     auto editor = cast<CGameCtnEditorCommon@>(app.Editor);
+    if (editor is null) {
+        warn("app.Editor is null");
+        return {};
+    }
     auto pmt = editor.PluginMapType;
+    if (editor is null) {
+        warn("editor.PluginMapType is null");
+        return {};
+    }
     auto inventory = pmt.Inventory;
+    if (inventory is null) {
+        warn("pmt.Inventory is null");
+        return {};
+    }
     
+    if (inventory.RootNodes.Length == 0) {
+        warn("inventory.RootNodes is empty");
+        return {};
+    }
     auto blocksNode = cast<CGameCtnArticleNodeDirectory@>(inventory.RootNodes[0]);
     auto blocks = FindAllBlocks(blocksNode);
     return blocks;
 }
 
-array<BlockInfo> FindAllBlocks(CGameCtnArticleNodeDirectory@ parentNode, string folder = "")
+array<BlockExportData> FindAllBlocks(CGameCtnArticleNodeDirectory@ parentNode, string folder = "")
 {
-    array<BlockInfo> blocks;
+    array<BlockExportData> blocks;
     for(uint i = 0; i < parentNode.ChildNodes.Length; i++) {
         auto node = parentNode.ChildNodes[i];
         if(node.IsDirectory) {
@@ -131,9 +167,8 @@ array<BlockInfo> FindAllBlocks(CGameCtnArticleNodeDirectory@ parentNode, string 
             }
 
             string blockFolder = folder + ana.Name;
-            string blockFilePath = 'Nadeo/' + blockFolder + '.Item.Gbx';
 
-            auto blockInfo = BlockInfo(block, blockFolder, blockFilePath);
+            auto blockInfo = BlockExportData(block, blockFolder);
             blocks.InsertLast(blockInfo);
         }
     }
