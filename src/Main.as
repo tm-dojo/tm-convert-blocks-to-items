@@ -1,6 +1,6 @@
 void Main() {
-    // CreateBlockItems();
-    print("test");
+    screenHeight = Draw::GetHeight();
+    screenWidth = Draw::GetWidth();
 }
 
 void UpdateAllBlocks() {
@@ -26,20 +26,33 @@ void RenderInterface() {
         if (UI::Button("Reset blocks")) {
             blocks = {};
         }
+        UI::SameLine();
+        if (UI::Button("Set item path")) {
+            auto app = GetApp();
+            app.BasicDialogs.String = "Test path";
+        }
 
-        if (UI::BeginTable("blocks", 6)) {
+        if (UI::BeginTable("blocks", 5)) {
             UI::TableSetupColumn("", UI::TableColumnFlags::WidthFixed | UI::TableColumnFlags::NoSort);
             UI::TableSetupColumn("Blacklist", UI::TableColumnFlags::WidthFixed);
             UI::TableSetupColumn("Exported", UI::TableColumnFlags::WidthFixed);
             UI::TableSetupColumn("Block Name", UI::TableColumnFlags::WidthFixed);   
             UI::TableSetupColumn("Block Item Path", UI::TableColumnFlags::WidthFixed);   
-            UI::TableSetupColumn("Block File Export Path", UI::TableColumnFlags::WidthFixed);    
             UI::TableHeadersRow();
             for (uint i = 0; i < blocks.Length; i++) {
                 UI::TableNextRow();
                 UI::TableSetColumnIndex(0);
-                if (UI::Button("Export" + "###" + i)) {
+                bool buttonClicked = UI::Button("Export" + "###" + i);
+                if(UI::IsItemHovered()) {
+                    UI::BeginTooltip();
+                    UI::Text("Export to: " + blocks[i].blockFileExportPath);
+                    UI::EndTooltip();
+                }
+                if(buttonClicked) {
                     print("Exporting " + blocks[i].block.Name);
+                    ConvertBlockToItemHandle@ handle = cast<ConvertBlockToItemHandle>(ConvertBlockToItemHandle());
+                    handle.blockExportData = blocks[i];
+                    startnew(ConvertBlockToItemCoroutine, handle);
                 }
                 UI::TableSetColumnIndex(1);
                 UI::Text("no");
@@ -49,8 +62,6 @@ void RenderInterface() {
                 UI::Text(blocks[i].block.Name);
                 UI::TableSetColumnIndex(4);
                 UI::Text(blocks[i].blockItemPath);
-                UI::TableSetColumnIndex(5);
-                UI::Text(blocks[i].blockFileExportPath);
             }
             UI::EndTable();
         }
@@ -79,7 +90,8 @@ string GetBlockItemPath(string blockFolder) {
 }
 
 string GetBlockFilePath(string blockItemPath) {
-    return IO::FromStorageFolder("Exports/" + blockItemPath);
+    // return IO::FromStorageFolder("Exports/" + blockItemPath);
+    return "BlockToItemExports/" + blockItemPath;
 }
 
 class BlockExportData {
@@ -88,12 +100,15 @@ class BlockExportData {
     string blockItemPath;
     string blockFileExportPath;
 
+    bool exported = false;
+
     BlockExportData() {}
     BlockExportData(CGameCtnBlockInfo@ block, string blockFolder) {
         @this.block = block;
         this.blockFolder = blockFolder;
         this.blockItemPath = GetBlockItemPath(blockFolder);
         this.blockFileExportPath = GetBlockFilePath(this.blockItemPath);
+        this.exported = false;
     }
 }
 
@@ -233,7 +248,7 @@ void ExploreNode(CGameCtnArticleNodeDirectory@ parentNode, string folder = "") {
                     continue;
                 }
                 print("Converting block: " + block.Name + " " + count + " / " + totalBlocks);
-                ConvertBlockToItem(block, itemLoc);
+                // ConvertBlockToItem(block, itemLoc);
             }
         }
     }
@@ -242,63 +257,98 @@ void ExploreNode(CGameCtnArticleNodeDirectory@ parentNode, string folder = "") {
 int2 iconButton = int2(594, 557);
 int2 iconDirectionButton = int2(1311, 736);
 
-void ConvertBlockToItem(CGameCtnBlockInfo@ block, string desiredItemLocation) {
+class ConvertBlockToItemHandle {
+    BlockExportData blockExportData;
+}
+void ConvertBlockToItemCoroutine(ref@ refHandle) {
+    ConvertBlockToItemHandle handle = cast<ConvertBlockToItemHandle>(refHandle);
+    ConvertBlockToItem(handle.blockExportData);
+}
+
+void ConvertBlockToItem(BlockExportData blockExportData) {
+    CGameCtnBlockInfo@ block = blockExportData.block;
+    string desiredItemLocation = blockExportData.blockFileExportPath;
     // Click screen at position to enter "create new item" UI
     auto xClick = screenWidth / 2;
     auto yClick = screenHeight / 2;
+    print("Clicking at: " + xClick + ", " + yClick);
 
     auto app = GetApp();
     auto editor = cast<CGameCtnEditorCommon@>(app.Editor);
     auto pmt = editor.PluginMapType;
     auto placeLocation = int3(20, 15, 20);
-    MyYield();
+    MyYield("Setting place mode to block");
     pmt.PlaceMode = CGameEditorPluginMap::EPlaceMode::Block;
-    MyYield();
+    MyYield("Setting cursor block model");
     @pmt.CursorBlockModel = block;
     int nBlocks = pmt.Blocks.Length;
     while(nBlocks == pmt.Blocks.Length) {
         clickFun.Call(true, xClick, yClick);
-        MyYield();
+        MyYield("Waiting for block to be placed");
     }
     // pmt.PlaceBlock_NoDestruction(block, placeLocation, CGameEditorPluginMap::ECardinalDirections::North);
+    MyYield("Block placed, attempting to click button open item editor UI");
+
+    // TODO: Checking for error of "Can't convert this block into a custom block." can be caught
+    // In app.ActiveMenus, the menus go from 0 to 1 if this error appears. So we can check 
+    // the first menu and look for the string "Can't convert this block into a custom block." or some ID
+
     editor.ButtonItemCreateFromBlockModeOnClick();
-    MyYield();
-    while(cast<CGameEditorItem>(app.Editor) is null) {
+    while (cast<CGameEditorItem>(app.Editor) is null) {
         @editor = cast<CGameCtnEditorCommon@>(app.Editor);
-        if(editor !is null && editor.PickedBlock !is null && editor.PickedBlock.BlockInfo.IdName == block.IdName) {
-            justClickFun.Call(true);
+        if (editor !is null && editor.PickedBlock !is null && editor.PickedBlock.BlockInfo.IdName == block.IdName) {
+            // justClickFun.Call(true);
+            clickFun.Call(true, xClick + Math::Rand(-10.0, 10.0), yClick + Math::Rand(-10.0, 10.0));
         }
-        MyYield();
+        MyYield("Waiting for item editor UI to open");
     }
+
     auto editorItem = cast<CGameEditorItem@>(app.Editor);
     editorItem.PlacementParamGridHorizontalSize = 32;
     editorItem.PlacementParamGridVerticalSize = 8;
     editorItem.PlacementParamFlyStep = 8;
 
+    MyYield("Clicking icon button");
     ClickPos(iconButton);
-    MyYield();
+    
+    MyYield("Clicking direction button");
+    // TODO: This is not working, the button is not being clicked. 
+    // Add checks to make sure the dialog is visible before clicking
     ClickPos(iconDirectionButton);
-    MyYield();
+
+    MyYield("Clicking Save As button");
 
     editorItem.FileSaveAs();
     
-    MyYield();
-    
-    MyYield();
+    MyYield("Setting desired item save location at: " + desiredItemLocation);
+    print("Before: " + app.BasicDialogs.String);
+    while (app.BasicDialogs.String == "") {
+        MyYield("Waiting for dialog to open");
+    }
     app.BasicDialogs.String = desiredItemLocation;
-    
-    MyYield();
+    print("After: " + app.BasicDialogs.String);
+   
+    while (app.BasicDialogs.String != desiredItemLocation) {
+        MyYield("Waiting for dialog to update path");
+    }
+
+    MyYield("Click Save As button");
+    MyYield("Click Save As button");
+
+    MyYield("Click Save As button");
     app.BasicDialogs.DialogSaveAs_OnValidate();
     
-    MyYield();
+    MyYield("Click Save As button");
     app.BasicDialogs.DialogSaveAs_OnValidate();
     
-    MyYield();
+    MyYield("Exiting item editor");
     cast<CGameEditorItem>(app.Editor).Exit();
 
     while(cast<CGameCtnEditorCommon@>(app.Editor) is null) {
-        MyYield();
+        MyYield("Waiting to exit item editor");
     }
+
+    MyYield("Undo block placement");
     @editor = cast<CGameCtnEditorCommon@>(app.Editor);
     @pmt = editor.PluginMapType;
     pmt.Undo();
@@ -312,6 +362,10 @@ void ClickPos(int2 pos) {
 
 void MyYield() {
     yield();
+}
+void MyYield(string msg) {
+    print("Yield Msg: " + msg);
+    MyYield();
 }
 
 Import::Library@ GetZippedLibrary(const string &in relativeDllPath) {
