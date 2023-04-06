@@ -98,5 +98,13 @@ class TreeNode {
     void Export() {
         array<BlockExportData@> blocksToExport = GetAllBlocks();
         print("Exporting " + blocksToExport.Length + " blocks...");
+        
+        // TODO: Use Export queue to export all items
+        // Only exporting first item now
+        if (blocksToExport.Length > 0) {
+            ConvertBlockToItemHandle@ handle = cast<ConvertBlockToItemHandle>(ConvertBlockToItemHandle());
+            handle.blockExportData = blocks[0];
+            startnew(ConvertBlockToItemCoroutine, handle);
+        }
     }
 }
