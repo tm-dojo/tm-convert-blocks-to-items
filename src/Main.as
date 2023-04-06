@@ -7,7 +7,13 @@ void UpdateAllBlocks() {
     bool initLib = InitializeLib();
     if(!initLib) return;
 
-    blocks = FindAllBlocksInEditorInventory();
+    blocks = FindAllBlocksInEditorInventory();    
+    blockExportTree = BlockExportTree(blocks);
+}
+
+void ResetBlocks() {
+    blocks = {};
+    blockExportTree = BlockExportTree();
 }
 
 void RenderMenu() {
@@ -32,39 +38,42 @@ void RenderInterface() {
             app.BasicDialogs.String = "Test path";
         }
 
-        if (UI::BeginTable("blocks", 5)) {
-            UI::TableSetupColumn("", UI::TableColumnFlags::WidthFixed | UI::TableColumnFlags::NoSort);
-            UI::TableSetupColumn("Blacklist", UI::TableColumnFlags::WidthFixed);
-            UI::TableSetupColumn("Exported", UI::TableColumnFlags::WidthFixed);
-            UI::TableSetupColumn("Block Name", UI::TableColumnFlags::WidthFixed);   
-            UI::TableSetupColumn("Block Item Path", UI::TableColumnFlags::WidthFixed);   
-            UI::TableHeadersRow();
-            for (uint i = 0; i < blocks.Length; i++) {
-                UI::TableNextRow();
-                UI::TableSetColumnIndex(0);
-                bool buttonClicked = UI::Button("Export" + "###" + i);
-                if(UI::IsItemHovered()) {
-                    UI::BeginTooltip();
-                    UI::Text("Export to: " + blocks[i].blockFileExportPath);
-                    UI::EndTooltip();
-                }
-                if(buttonClicked) {
-                    print("Exporting " + blocks[i].block.Name);
-                    ConvertBlockToItemHandle@ handle = cast<ConvertBlockToItemHandle>(ConvertBlockToItemHandle());
-                    handle.blockExportData = blocks[i];
-                    startnew(ConvertBlockToItemCoroutine, handle);
-                }
-                UI::TableSetColumnIndex(1);
-                UI::Text("no");
-                UI::TableSetColumnIndex(2);
-                UI::Text("no");
-                UI::TableSetColumnIndex(3);
-                UI::Text(blocks[i].block.Name);
-                UI::TableSetColumnIndex(4);
-                UI::Text(blocks[i].blockItemPath);
-            }
-            UI::EndTable();
-        }
+        blockExportTree.RenderInterface();
+
+        // if (UI::BeginTable("blocks", 5)) {
+        //     UI::TableSetupColumn("", UI::TableColumnFlags::WidthFixed | UI::TableColumnFlags::NoSort);
+        //     UI::TableSetupColumn("Blacklist", UI::TableColumnFlags::WidthFixed);
+        //     UI::TableSetupColumn("Exported", UI::TableColumnFlags::WidthFixed);
+        //     UI::TableSetupColumn("Block Name", UI::TableColumnFlags::WidthFixed);   
+        //     UI::TableSetupColumn("Block Item Path", UI::TableColumnFlags::WidthFixed);   
+        //     UI::TableHeadersRow();
+        //     for (uint i = 0; i < blocks.Length; i++) {
+        //         UI::TableNextRow();
+        //         UI::TableSetColumnIndex(0);
+        //         bool buttonClicked = UI::Button("Export" + "###" + i);
+        //         if(UI::IsItemHovered()) {
+        //             UI::BeginTooltip();
+        //             UI::Text("Export to: " + blocks[i].blockFileExportPath);
+        //             UI::EndTooltip();
+        //         }
+        //         if(buttonClicked) {
+        //             print("Exporting " + blocks[i].block.Name);
+        //             ConvertBlockToItemHandle@ handle = cast<ConvertBlockToItemHandle>(ConvertBlockToItemHandle());
+        //             handle.blockExportData = blocks[i];
+        //             startnew(ConvertBlockToItemCoroutine, handle);
+        //         }
+        //         UI::TableSetColumnIndex(1);
+        //         UI::Text("no");
+        //         UI::TableSetColumnIndex(2);
+        //         UI::Text("no");
+        //         UI::TableSetColumnIndex(3);
+        //         UI::Text(blocks[i].block.Name);
+        //         UI::TableSetColumnIndex(4);
+        //         UI::Text(blocks[i].blockItemPath);
+        //     }            
+        //     UI::EndTable();
+        // }
+
         UI::End();
     }
 }
@@ -75,7 +84,9 @@ Import::Function@ mousePosFun = null;
 Import::Function@ justClickFun = null;
 
 bool windowOpen = true;
-array<BlockExportData> blocks;
+array<BlockExportData@> blocks;
+
+BlockExportTree blockExportTree;
 
 // blacklist include terms, these cause crashes
 string[] blacklist = {"GateSpecialTurbo", "GateSpecialBoost"};
@@ -126,7 +137,7 @@ bool InitializeLib() {
     return true;
 }
 
-array<BlockExportData> FindAllBlocksInEditorInventory()
+array<BlockExportData@> FindAllBlocksInEditorInventory()
 {
     auto app = GetApp();
     if (app is null) {
@@ -158,9 +169,9 @@ array<BlockExportData> FindAllBlocksInEditorInventory()
     return blocks;
 }
 
-array<BlockExportData> FindAllBlocks(CGameCtnArticleNodeDirectory@ parentNode, string folder = "")
+array<BlockExportData@> FindAllBlocks(CGameCtnArticleNodeDirectory@ parentNode, string folder = "")
 {
-    array<BlockExportData> blocks;
+    array<BlockExportData@> blocks;
     for(uint i = 0; i < parentNode.ChildNodes.Length; i++) {
         auto node = parentNode.ChildNodes[i];
         if(node.IsDirectory) {
