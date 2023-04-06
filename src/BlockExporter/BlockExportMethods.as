@@ -129,12 +129,47 @@ void ConvertBlockToItem(BlockExportData blockExportData) {
     editorItem.PlacementParamFlyStep = 8;
 
     MyYield("Clicking icon button");
-    ClickPos(ICON_BUTTON_POS);
-    
+
+    // Click icon button
+    // Old code, click pos:
+    // ClickPos(ICON_BUTTON_POS);    
+    // TODO: Add more error catching and early aborts for the following code:
+    CControlFrame@ frameClassEditor = cast<CControlFrame>(editorItem.FrameRoot.Childs[4]);
+    CControlFrame@ framePropertiesContainer = cast<CControlFrame>(frameClassEditor.Childs[1]);
+    CControlFrame@ frameProperties = cast<CControlFrame>(framePropertiesContainer.Childs[0]);
+    CControlListCard@ listCardProperties = cast<CControlListCard>(frameProperties.Childs[1]);
+    for (uint i = 0; i < listCardProperties.ListCards.Length; i++) {
+        CControlFrame@ frame = cast<CControlFrame>(listCardProperties.ListCards[i]);
+        if (frame.Childs.Length == 6) {
+            CControlLabel@ label = cast<CControlLabel>(frame.Childs[0]);
+            if (label.Label == "|ItemProperty|Icon") {
+                CControlFrame@ cardParamNod = cast<CControlFrame>(frame.Childs[5]);
+                CControlButton@ buttonNew = cast<CControlButton>(cardParamNod.Childs[3]);
+                buttonNew.OnAction();
+                break;
+            }
+        }
+    }
+
     MyYield("Clicking direction button");
-    // TODO: This is not working, the button is not being clicked. 
-    // Add checks to make sure the dialog is visible before clicking
-    ClickPos(ICON_DIRECTION_BUTTON_POS);
+
+    // Click direction button
+    // Old code, click pos:
+    // ClickPos(ICON_DIRECTION_BUTTON_POS);
+
+    while (app.ActiveMenus.Length == 0) {
+        MyYield("Waiting for dialog to open");
+    }
+
+    // TODO: Add more error catching for the following code:
+    CGameMenu@ activeMenus = app.ActiveMenus[0];
+    CGameMenuFrame@ currentFrame = activeMenus.CurrentFrame;
+    CControlFrame@ frameContent = cast<CControlFrame>(currentFrame.Childs[0]);
+    CControlFrame@ frameDialog = cast<CControlFrame>(frameContent.Childs[0]);
+    CControlGrid@ gridButtons = cast<CControlGrid>(frameDialog.Childs[2]);
+    CGameControlCardGeneric@ button1 = cast<CGameControlCardGeneric>(gridButtons.Childs[1]);
+    CControlButton@ buttonSelection = cast<CControlButton>(button1.Childs[0]);
+    buttonSelection.OnAction();
 
     MyYield("Clicking Save As button");
 
@@ -145,6 +180,7 @@ void ConvertBlockToItem(BlockExportData blockExportData) {
     while (app.BasicDialogs.String == "") {
         MyYield("Waiting for dialog to open");
     }
+    
     app.BasicDialogs.String = desiredItemLocation;
     print("After: " + app.BasicDialogs.String);
    
