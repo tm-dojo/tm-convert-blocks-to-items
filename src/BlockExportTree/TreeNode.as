@@ -6,7 +6,7 @@ class TreeBlock : TreeNode {
 
     void RenderInterface() override {
         if (UI::Button("Export###" + name)) {
-            print("Exporting " + name + "...");
+            this.Export();
         }
         UI::SameLine();
 
@@ -14,6 +14,10 @@ class TreeBlock : TreeNode {
             block.block.Icon;
             UI::TreePop();
         }
+    }
+    
+    array<BlockExportData@> GetAllBlocks() override {
+        return { block };
     }
 }
 
@@ -35,6 +39,17 @@ class TreeNode {
             }
         }
         return null;
+    }
+
+    array<BlockExportData@> GetAllBlocks() {
+        array<BlockExportData@> allBlocks;
+        for (int i = 0; i < children.Length; i++) {
+            array<BlockExportData@> subBlocks = children[i].GetAllBlocks();
+            for (int j = 0; j < subBlocks.Length; j++) {
+                allBlocks.InsertLast(subBlocks[j]);
+            }
+        }
+        return allBlocks;
     }
 
     // Add node to children
@@ -66,7 +81,7 @@ class TreeNode {
 
     void RenderInterface() {
         if (UI::Button("Export###" + name)) {
-            print("Exporting " + name + "...");
+            this.Export();
         }
         UI::SameLine();
 
@@ -78,5 +93,10 @@ class TreeNode {
             }
             UI::TreePop();
         }
+    }
+
+    void Export() {
+        array<BlockExportData@> blocksToExport = GetAllBlocks();
+        print("Exporting " + blocksToExport.Length + " blocks...");
     }
 }

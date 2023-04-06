@@ -30,7 +30,7 @@ void RenderInterface() {
         }
         UI::SameLine();
         if (UI::Button("Reset blocks")) {
-            blocks = {};
+            ResetBlocks();
         }
         UI::SameLine();
         if (UI::Button("Set item path")) {
