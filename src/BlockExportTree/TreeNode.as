@@ -125,13 +125,33 @@ class TreeNode {
         UI::SameLine();
 
         // Render node and children
+        vec4 prevColor = UI::GetStyleColor(UI::Col::Text);
+
+        bool pushedColor = false;
+        if (exportedBlocks > 0) {
+            if (exportedBlocks == totalBlocks) {
+                UI::PushStyleColor(UI::Col::Text, vec4(0.0, 1.0, 0.0, 1.0));
+            } else {
+                UI::PushStyleColor(UI::Col::Text, vec4(1.0, 1.0, 0.0, 1.0));
+            }
+            pushedColor = true;
+        }
+
         if (UI::TreeNode(name + " (" + exportedBlocks + "/" + totalBlocks + ")")) {
+            // Temporarily push previous color to children
+            UI::PushStyleColor(UI::Col::Text, prevColor);
             for (uint i = 0; i < children.Length; i++) {
                 if (children[i] !is null) {
                     children[i].RenderInterface();
                 }
             }
+            UI::PopStyleColor();
+
             UI::TreePop();
+        }
+
+        if (pushedColor) {
+            UI::PopStyleColor();
         }
     }
 
