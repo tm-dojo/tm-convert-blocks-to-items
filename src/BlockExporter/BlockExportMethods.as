@@ -138,6 +138,40 @@ void ConvertBlockToItem(BlockExportData@ blockExportData) {
     }
 
     auto editorItem = cast<CGameEditorItem@>(app.Editor);
+
+    // Rough failsafe to abort if a grass model is detected
+    if (editorItem.ItemModel !is null && editorItem.ItemModel.EntityModelEdition !is null) {
+        auto itemModelEdition = cast<CGameCommonItemEntityModelEdition>(editorItem.ItemModel.EntityModelEdition);
+        if (itemModelEdition !is null) {
+            auto meshCrystal = itemModelEdition.MeshCrystal;
+            if (meshCrystal.CrystalEdgeCount == 12 &&
+                meshCrystal.CrystalVertexCount == 9 &&
+                meshCrystal.CrystalFaceCount == 4) {
+                // A model with these properties is most likely a grass model, abort export                
+                MyYield("Aborting export - grass model detected");
+                cast<CGameEditorItem>(app.Editor).Exit();
+
+                MyYield("Aborting export - Waiting for confirm dialog to open");
+                while (app.ActiveMenus.Length == 0) {
+                    MyYield("Waiting for confirm dialog to open");
+                }    
+
+                MyYield("Aborting export - Waiting for item editor to exit");
+                while(cast<CGameCtnEditorCommon@>(app.Editor) is null) {
+                    MyYield("Aborting export - Waiting for item editor to exit");
+                    GetApp().BasicDialogs.AskYesNo_No();
+                }
+                
+
+                MyYield("Aborting export - Remove all blocks");
+                @editor = cast<CGameCtnEditorCommon@>(app.Editor);
+                @pmt = editor.PluginMapType;
+                pmt.RemoveAll();
+                return;
+            }
+        }
+    }
+
     editorItem.PlacementParamGridHorizontalSize = 32;
     editorItem.PlacementParamGridVerticalSize = 8;
     editorItem.PlacementParamFlyStep = 8;
