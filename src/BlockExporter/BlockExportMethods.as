@@ -108,25 +108,31 @@ void ConvertBlockToItem(BlockExportData@ blockExportData) {
     MyYield("Setting place mode to block");
     pmt.PlaceMode = CGameEditorPluginMap::EPlaceMode::Block;
 
-    MyYield("Setting cursor block model");
-    @pmt.CursorBlockModel = block;
-    int nBlocks = pmt.Blocks.Length;
-    while(nBlocks == pmt.Blocks.Length) {
-        clickFun.Call(true, xClick, yClick);
-        MyYield("Attempting to place block");
-    }
-    // pmt.PlaceBlock_NoDestruction(block, placeLocation, CGameEditorPluginMap::ECardinalDirections::North);
+    MyYield("Placing block");
+    // @pmt.CursorBlockModel = block;
+    // int nBlocks = pmt.Blocks.Length;
+    // while(nBlocks == pmt.Blocks.Length) {
+    //     clickFun.Call(true, xClick, yClick);
+    //     MyYield("Attempting to place block");
+    // }
+    pmt.PlaceGhostBlock(block, placeLocation, CGameEditorPluginMap::ECardinalDirections::North);
 
     MyYield("Block placed, attempting to click button open item editor UI");
     // TODO: Checking for error of "Can't convert this block into a custom block." can be caught
     // In app.ActiveMenus, the menus go from 0 to 1 if this error appears. So we can check 
     // the first menu and look for the string "Can't convert this block into a custom block." or some ID
     editor.ButtonItemCreateFromBlockModeOnClick();
+
+    MyYield("Waiting for picked block to be the correct block");
+    while (editor.PickedBlock is null || editor.PickedBlock.BlockModel.Id.GetName() != block.Id.GetName()) {
+        MyYield("Waiting for picked block to be the correct block");
+    }
+
     while (cast<CGameEditorItem>(app.Editor) is null) {
         @editor = cast<CGameCtnEditorCommon@>(app.Editor);
-        if (editor !is null && editor.PickedBlock !is null && editor.PickedBlock.BlockInfo.IdName == block.IdName) {
-            // justClickFun.Call(true);
-            clickFun.Call(true, xClick + Math::Rand(-10.0, 10.0), yClick + Math::Rand(-10.0, 10.0));
+        if (editor !is null && editor.PickedBlock !is null && editor.PickedBlock.BlockModel.Id.GetName() == block.Id.GetName()) {
+            justClickFun.Call(true);
+            // clickFun.Call(true, xClick + Math::Rand(-10.0, 10.0), yClick + Math::Rand(-10.0, 10.0));
         }
         MyYield("Waiting for item editor UI to open");
     }
