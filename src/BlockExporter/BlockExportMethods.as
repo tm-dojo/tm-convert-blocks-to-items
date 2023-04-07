@@ -215,10 +215,10 @@ void ConvertBlockToItem(BlockExportData@ blockExportData) {
         MyYield("Waiting for item editor to exit");
     }
 
-    MyYield("Undo block placement");
+    MyYield("Remove all blocks");
     @editor = cast<CGameCtnEditorCommon@>(app.Editor);
     @pmt = editor.PluginMapType;
-    pmt.Undo();
+    pmt.RemoveAll();
 }
 
 
