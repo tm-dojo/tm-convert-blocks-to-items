@@ -137,9 +137,18 @@ class TreeNode {
 
     // Collect all blocks in children and start export on all those blocks
     void Export() {
-        array<BlockExportData@> blocksToExport = GetAllBlocks();
-        print("Exporting " + blocksToExport.Length + " blocks...");
+        array<BlockExportData@> allBlocks = GetAllBlocks();
+
+        // Remove all block that have already been exported
+        array<BlockExportData@> blocksToExport;
+        for (int i = 0; i < allBlocks.Length; i++) {
+            if (!allBlocks[i].exported) {
+                blocksToExport.InsertLast(allBlocks[i]);
+            }
+        }
         
+        print("Exporting " + blocksToExport.Length + " blocks...");
+
         ConvertMultipleBlockToItemCoroutineHandle@ handle = cast<ConvertMultipleBlockToItemCoroutineHandle>(ConvertMultipleBlockToItemCoroutineHandle());
         handle.blocks = blocksToExport;
         startnew(ConvertMultipleBlockToItemCoroutine, handle);
