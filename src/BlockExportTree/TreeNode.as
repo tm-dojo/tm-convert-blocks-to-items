@@ -22,10 +22,12 @@ class TreeBlock : TreeNode {
 }
 
 class TreeNode {
+    // Node member veriables
     string name;
     BlockExportData@ block;
     array<TreeNode@> children;
 
+    // Accumulated member variables
     int totalBlocks = 0;
 
     TreeNode(string name) {
@@ -44,6 +46,8 @@ class TreeNode {
     array<BlockExportData@> GetAllBlocks() {
         array<BlockExportData@> allBlocks;
         for (int i = 0; i < children.Length; i++) {
+            if (children[i] is null) continue;
+
             array<BlockExportData@> subBlocks = children[i].GetAllBlocks();
             for (int j = 0; j < subBlocks.Length; j++) {
                 allBlocks.InsertLast(subBlocks[j]);
@@ -63,6 +67,7 @@ class TreeNode {
     //  If the path only contains the file name, it adds the block as a TreeBlock to the current children
     void AddBlock(BlockExportData@ block, string path) {
         totalBlocks += 1;
+
         auto parts = path.Split("/");
         if (parts.Length == 1) {
             // Only one part left (blockName.Item.Gbx), add block as TreeBlock
@@ -75,6 +80,7 @@ class TreeNode {
                 @node = TreeNode(parts[0]);
                 AddChildNode(node);
             }
+            // Recursively add blocks with the rest of the path, removing the first part
             node.AddBlock(block, path.SubStr(parts[0].Length + 1));
         }
     }

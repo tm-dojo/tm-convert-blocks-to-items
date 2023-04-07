@@ -103,16 +103,14 @@ void ConvertBlockToItem(BlockExportData blockExportData) {
     int nBlocks = pmt.Blocks.Length;
     while(nBlocks == pmt.Blocks.Length) {
         clickFun.Call(true, xClick, yClick);
-        MyYield("Waiting for block to be placed");
+        MyYield("Attempting to place block");
     }
-
     // pmt.PlaceBlock_NoDestruction(block, placeLocation, CGameEditorPluginMap::ECardinalDirections::North);
-    MyYield("Block placed, attempting to click button open item editor UI");
 
+    MyYield("Block placed, attempting to click button open item editor UI");
     // TODO: Checking for error of "Can't convert this block into a custom block." can be caught
     // In app.ActiveMenus, the menus go from 0 to 1 if this error appears. So we can check 
     // the first menu and look for the string "Can't convert this block into a custom block." or some ID
-
     editor.ButtonItemCreateFromBlockModeOnClick();
     while (cast<CGameEditorItem>(app.Editor) is null) {
         @editor = cast<CGameCtnEditorCommon@>(app.Editor);
@@ -129,7 +127,6 @@ void ConvertBlockToItem(BlockExportData blockExportData) {
     editorItem.PlacementParamFlyStep = 8;
 
     MyYield("Clicking icon button");
-
     // Click icon button
     // Old code, click pos:
     // ClickPos(ICON_BUTTON_POS);    
@@ -152,11 +149,11 @@ void ConvertBlockToItem(BlockExportData blockExportData) {
     }
 
     MyYield("Clicking direction button");
-
     // Click direction button
     // Old code, click pos:
     // ClickPos(ICON_DIRECTION_BUTTON_POS);
 
+    MyYield("Waiting for dialog to open");
     while (app.ActiveMenus.Length == 0) {
         MyYield("Waiting for dialog to open");
     }
@@ -171,37 +168,34 @@ void ConvertBlockToItem(BlockExportData blockExportData) {
     CControlButton@ buttonSelection = cast<CControlButton>(button1.Childs[0]);
     buttonSelection.OnAction();
 
-    MyYield("Clicking Save As button");
-
+    MyYield("Clicking Item Save As button");
     editorItem.FileSaveAs();
     
-    MyYield("Setting desired item save location at: " + desiredItemLocation);
-    print("Before: " + app.BasicDialogs.String);
-    while (app.BasicDialogs.String == "") {
-        MyYield("Waiting for dialog to open");
+    MyYield("Waiting for save as dialog to open");
+    while (app.BasicDialogs.String == "" || app.ActiveMenus.Length == 0) {
+        MyYield("Waiting for save as dialog to open");
     }
-    
+
+    MyYield("Setting desired item save location at: " + desiredItemLocation);    
     app.BasicDialogs.String = desiredItemLocation;
-    print("After: " + app.BasicDialogs.String);
    
+    MyYield("Waiting for dialog to update path");
     while (app.BasicDialogs.String != desiredItemLocation) {
         MyYield("Waiting for dialog to update path");
     }
 
     MyYield("Click Save As button");
-    MyYield("Click Save As button");
-
-    MyYield("Click Save As button");
     app.BasicDialogs.DialogSaveAs_OnValidate();
     
-    MyYield("Click Save As button");
+    MyYield("Click Save As button (confirm overwrite)");
     app.BasicDialogs.DialogSaveAs_OnValidate();
     
     MyYield("Exiting item editor");
     cast<CGameEditorItem>(app.Editor).Exit();
 
+    MyYield("Waiting for item editor to exit");
     while(cast<CGameCtnEditorCommon@>(app.Editor) is null) {
-        MyYield("Waiting to exit item editor");
+        MyYield("Waiting for item editor to exit");
     }
 
     MyYield("Undo block placement");

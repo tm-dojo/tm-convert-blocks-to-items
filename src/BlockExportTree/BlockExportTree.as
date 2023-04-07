@@ -13,6 +13,7 @@ class BlockExportTree {
             if (root.children.Length == 0) {
                 UI::Text("No blocks found, please refresh.");
             }
+            // Use custom render interface on all children to avoid rendering the root node
             for (uint i = 0; i < root.children.Length; i++) {
                 if (root.children[i] !is null) {
                     root.children[i].RenderInterface();
