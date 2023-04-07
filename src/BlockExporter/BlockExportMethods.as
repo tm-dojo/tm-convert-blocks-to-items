@@ -72,16 +72,26 @@ array<BlockExportData@> FindAllBlocksInEditorInventory()
     return blocks;
 }
 
-class ConvertBlockToItemHandle {
-    BlockExportData blockExportData;
+class ConvertMultipleBlockToItemCoroutineHandle {
+    array<BlockExportData@> blocks;
+}
+void ConvertMultipleBlockToItemCoroutine(ref@ refHandle) {
+    ConvertMultipleBlockToItemCoroutineHandle handle = cast<ConvertMultipleBlockToItemCoroutineHandle>(refHandle);
+    // TODO: Use queueing system to convert blocks
+    for (uint i = 0; i < handle.blocks.Length; i++) {
+        ConvertBlockToItem(handle.blocks[i]);
+    }
 }
 
+class ConvertBlockToItemCoroutineHandle {
+    BlockExportData@ blockExportData;
+}
 void ConvertBlockToItemCoroutine(ref@ refHandle) {
-    ConvertBlockToItemHandle handle = cast<ConvertBlockToItemHandle>(refHandle);
+    ConvertBlockToItemCoroutineHandle handle = cast<ConvertBlockToItemCoroutineHandle>(refHandle);
     ConvertBlockToItem(handle.blockExportData);
 }
 
-void ConvertBlockToItem(BlockExportData blockExportData) {
+void ConvertBlockToItem(BlockExportData@ blockExportData) {
     CGameCtnBlockInfo@ block = blockExportData.block;
     string desiredItemLocation = blockExportData.blockFileExportPath;
     
@@ -267,4 +277,10 @@ bool CutMap() {
 CGameCtnEditorCommon@ Editor() {
     auto app = GetApp();
     return cast<CGameCtnEditorCommon@>(app.Editor);
+}
+
+bool ConfirmBlockExport(BlockExportData@ block) {
+    string path = IO::FromUserGameFolder("Items/" + block.blockFileExportPath);
+    print("ConfirmBlockExport: " + path);
+    return IO::FileExists(path);
 }
