@@ -187,6 +187,7 @@ void ConvertBlockToItem(BlockExportData@ blockExportData) {
     }
 
     MyYield("Setting desired item save location at: " + desiredItemLocation);    
+    // This will save the item to  User/Trackmania2020/Items/ + the desiredItemLocation
     app.BasicDialogs.String = desiredItemLocation;
    
     MyYield("Waiting for dialog to update path");
@@ -281,6 +282,5 @@ CGameCtnEditorCommon@ Editor() {
 
 bool ConfirmBlockExport(BlockExportData@ block) {
     string path = IO::FromUserGameFolder("Items/" + block.blockFileExportPath);
-    print("ConfirmBlockExport: " + path);
     return IO::FileExists(path);
 }

@@ -104,7 +104,7 @@ class BlockExportData {
         this.blockFolder = blockFolder;
         this.blockItemPath = GetBlockItemPath(blockFolder);
         this.blockFileExportPath = GetBlockFilePath(this.blockItemPath);
-        this.exported = false;
+        this.exported = ConfirmBlockExport(this);
     }
 }
 

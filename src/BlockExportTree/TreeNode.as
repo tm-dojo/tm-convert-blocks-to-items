@@ -90,6 +90,7 @@ class TreeNode {
     //  If the path only contains the file name, it adds the block as a TreeBlock to the current children
     void AddBlock(BlockExportData@ block, string path) {
         totalBlocks += 1;
+        if (block.exported) exportedBlocks += 1;
 
         array<string> parts = path.Split("/");
         if (parts.Length == 1) {
