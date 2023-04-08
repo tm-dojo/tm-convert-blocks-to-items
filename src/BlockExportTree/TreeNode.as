@@ -9,10 +9,6 @@ class TreeBlock : TreeNode {
             this.Export();
         }
         UI::SameLine();
-        if (UI::Button("Check###check-" + name)) {
-            this.UpdateNodeInfo();
-        }
-        UI::SameLine();
 
         bool pushedColor = false;
         if (block.exported) {
@@ -41,19 +37,13 @@ class TreeBlock : TreeNode {
         return { block };
     }
 
-    // Checks the export path of this block and updates the exported flag
-    void UpdateNodeInfo() override {
-        block.exported = ConfirmBlockExport(block);
-    }
-
-    // As a leaf node, this block will return 1 or 0 depending on whether the block is exported
-    int NumExportedBlocks() override {
-        return block.exported ? 1 : 0;
-    }    
-    
-    // As a leaf node, this block will return 1 or 0 depending on whether the block is errored
-    int NumErroredBlocks() override {
-        return block.errorMessage != "" ? 1 : 0;
+    void NotifyBlockChange(BlockExportData@ block) override {
+        exportedBlocks = block.exported ? 1 : 0;
+        erroredBlocks = block.errorMessage != "" ? 1 : 0;
+        
+        if (parent !is null) {
+            parent.NotifyBlockChange(block);
+        }
     }
 }
 
@@ -68,6 +58,9 @@ class TreeNode {
     int totalBlocks = 0;
     int exportedBlocks = 0;
     int erroredBlocks = 0;
+
+    // Remember tree open/close state
+    bool wasOpen = false;
 
     TreeNode(string name) {
         this.name = name;
@@ -100,6 +93,29 @@ class TreeNode {
         if (node is null) return;
         @node.parent = this;
         children.InsertLast(node);
+    }
+
+    // Recursively finds a node in its children from this node given a path like "Nadeo/RoadTech/Main/BlockName.Item.Gbx"
+    TreeNode@ FindNodeAtPath(string path) {
+        array<string> parts = path.Split("/");
+
+        // Return null if path is empty
+        if (parts.Length == 0) return null;
+
+        TreeNode@ node = GetChild(parts[0]);
+        if (node is null) return null;
+        
+        if (parts.Length == 1) {
+            // Only one part left (blockName.Item.Gbx), return this node if the name matches
+            if (parts[0] == node.name) {
+                return node;
+            } else {
+                return null;
+            }
+        } else {
+            // Recursively find node with the rest of the path, removing the first part
+            return node.FindNodeAtPath(path.SubStr(parts[0].Length + 1));
+        }
     }
 
     // Recursively add block to this and children nodes, given a path like "Nadeo/RoadTech/Main/BlockName.Item.Gbx" 
@@ -135,12 +151,6 @@ class TreeNode {
         }
         UI::SameLine();
 
-        // Check exports button
-        if (UI::Button("Check###check-" + name)) {
-            this.UpdateNodeInfo();
-        }
-        UI::SameLine();
-
         // Render node and children
         vec4 prevColor = UI::GetStyleColor(UI::Col::Text);
 
@@ -159,7 +169,9 @@ class TreeNode {
         }
 
         string nodeText = name + " (" + exportedBlocks + "/" + totalBlocks + " exported, " + erroredBlocks +" errors)";
-        if (UI::TreeNode(nodeText)) {
+        if (UI::TreeNode(nodeText, wasOpen ? UI::TreeNodeFlags::DefaultOpen : UI::TreeNodeFlags::None)) {
+            wasOpen = true;
+
             // Temporarily push previous color to children
             UI::PushStyleColor(UI::Col::Text, prevColor);
             for (uint i = 0; i < children.Length; i++) {
@@ -170,6 +182,8 @@ class TreeNode {
             UI::PopStyleColor();
 
             UI::TreePop();
+        } else {
+            wasOpen = false;
         }
 
         if (pushedColor) {
@@ -195,58 +209,21 @@ class TreeNode {
         handle.blocks = blocksToExport;
         startnew(ConvertMultipleBlockToItemCoroutine, handle);
     }
-    
-    // Recursively check all children if the blocks are exported at the export path
-    void UpdateNodeInfo() {
-        for (uint i = 0; i < children.Length; i++) {
-            if (children[i] !is null) {
-                children[i].UpdateNodeInfo();
-            }
-        }
-        UpdateNumExportedBlocks();
-        UpdateNumErroredBlocks();
-    }
 
-    // Recursively update all children's total number of exported blocks
-    void UpdateNumExportedBlocks() {
-        exportedBlocks = NumExportedBlocks();
+    void NotifyBlockChange(BlockExportData@ block) {
+        int newExportedBlocks = 0;
+        int newErroredBlocks = 0;
         for (int i = 0; i < children.Length; i++) {
             if (children[i] !is null) {
-                children[i].UpdateNumExportedBlocks();
+                newExportedBlocks += children[i].exportedBlocks;
+                newErroredBlocks += children[i].erroredBlocks;
             }
         }
-    }
+        exportedBlocks = newExportedBlocks;
+        erroredBlocks = newErroredBlocks;
 
-    // Recursively count all exported blocks in children
-    int NumExportedBlocks() {
-        int totalExportedBlocks = 0;
-        for (uint i = 0; i < children.Length; i++) {
-            if (children[i] !is null) {
-                totalExportedBlocks += children[i].NumExportedBlocks();
-            }
+        if (parent !is null) {
+            parent.NotifyBlockChange(block);
         }
-        return totalExportedBlocks;
-    }
-
-
-    // Recursively update all children's total number of errored blocks
-    void UpdateNumErroredBlocks() {
-        erroredBlocks = NumErroredBlocks();
-        for (int i = 0; i < children.Length; i++) {
-            if (children[i] !is null) {
-                children[i].UpdateNumErroredBlocks();
-            }
-        }
-    }
-
-    // Recursively count all exported blocks in children
-    int NumErroredBlocks() {
-        int totalErroredBlocks = 0;
-        for (uint i = 0; i < children.Length; i++) {
-            if (children[i] !is null) {
-                totalErroredBlocks += children[i].NumErroredBlocks();
-            }
-        }
-        return totalErroredBlocks;
     }
 }

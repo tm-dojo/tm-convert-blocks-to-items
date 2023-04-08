@@ -81,6 +81,9 @@ void ConvertMultipleBlockToItemCoroutine(ref@ refHandle) {
     for (uint i = 0; i < handle.blocks.Length; i++) {
         try {
             ConvertBlockToItem(handle.blocks[i]);
+            
+            handle.blocks[i].exported = ConfirmBlockExport(handle.blocks[i]);
+            handle.blocks[i].errorMessage = "";
         } catch {
             string exception = getExceptionInfo();
             if (!IsBlockException(exception)) {
@@ -90,8 +93,12 @@ void ConvertMultipleBlockToItemCoroutine(ref@ refHandle) {
             string blockExceptionMessage = RemoveBlockExceptionPrefix(exception);
             error("Block export failed: " + blockExceptionMessage);
 
+            handle.blocks[i].exported = false;
             handle.blocks[i].errorMessage = blockExceptionMessage;
         }
+        
+        // Notify block export tree that block has changed
+        blockExportTree.NotifyBlockChange(handle.blocks[i]);
     }
 }
 

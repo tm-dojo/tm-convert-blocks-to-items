@@ -25,4 +25,15 @@ class BlockExportTree {
     void AddBlock(BlockExportData@ block) {
         root.AddBlock(block, block.blockItemPath);
     }
+
+    void NotifyBlockChange(BlockExportData@ block) {
+        TreeNode@ blockNode = root.FindNodeAtPath(block.blockItemPath);
+
+        if (blockNode is null) {
+            return;
+        }
+
+        print("Found node: " + blockNode.name);
+        blockNode.NotifyBlockChange(block);
+    }
 }
