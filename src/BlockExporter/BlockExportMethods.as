@@ -132,9 +132,11 @@ void ConvertBlockToItem(BlockExportData@ blockExportData, bool moveMouseManually
     pmt.CameraVAngle = 0.5;
     pmt.CameraToTargetDistance = 20;
 
-    MyYield("Placing block");
-    auto placeLocation = int3(20, 20, 20);
+    MyYield("Removing all blocks");
     pmt.RemoveAll();
+
+    MyYield("Placing ghost block");
+    auto placeLocation = int3(20, 20, 20);
     pmt.PlaceGhostBlock(block, placeLocation, CGameEditorPluginMap::ECardinalDirections::North);
 
     MyYield("Block placed, attempting to click button open item editor UI");
