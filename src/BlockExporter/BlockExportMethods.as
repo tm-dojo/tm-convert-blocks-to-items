@@ -144,7 +144,7 @@ void ConvertBlockToItem(BlockExportData@ blockExportData, bool moveMouseManually
     editor.ButtonItemCreateFromBlockModeOnClick();
 
     MyYield("Waiting for picked block to be the correct block");
-    auto start = Time::Now;
+    auto startBlockPick = Time::Now;
     while (editor.PickedBlock is null || editor.PickedBlock.BlockModel.Id.GetName() != block.Id.GetName()) {
         if (!moveMouseManually) {
             mousePosFun.Call(xClick, yClick);
@@ -153,17 +153,20 @@ void ConvertBlockToItem(BlockExportData@ blockExportData, bool moveMouseManually
             sleep(10);
             mousePosFun.Call(xClick + 10, yClick);
         }
-        if (Time::Now - start > 1000) {
-            ThrowBlockException("Failed to pick block in time");
+        if (Time::Now - startBlockPick > TIME_TO_PICK_BLOCK) {
+            ThrowBlockException("Failed to pick block in time (" + TIME_TO_PICK_BLOCK + "ms)");
         }
         MyYield("Waiting for picked block to be the correct block");
     }
 
+    auto startOpenItemEditor = Time::Now;
     while (cast<CGameEditorItem>(app.Editor) is null) {
         @editor = cast<CGameCtnEditorCommon@>(app.Editor);
         if (editor !is null && editor.PickedBlock !is null && editor.PickedBlock.BlockModel.Id.GetName() == block.Id.GetName()) {
             justClickFun.Call(true);
-            // clickFun.Call(true, xClick + Math::Rand(-10.0, 10.0), yClick + Math::Rand(-10.0, 10.0));
+        }
+        if (Time::Now - startOpenItemEditor > TIME_TO_OPEN_ITEM_EDITOR) {
+            ThrowBlockException("Failed to open item editor in time (" + TIME_TO_OPEN_ITEM_EDITOR + "ms)");
         }
         MyYield("Waiting for item editor UI to open");
     }
@@ -229,16 +232,12 @@ void ConvertBlockToItem(BlockExportData@ blockExportData, bool moveMouseManually
         }
     }
 
-    MyYield("Clicking direction button");
-    // Click direction button
-    // Old code, click pos:
-    // ClickPos(ICON_DIRECTION_BUTTON_POS);
-
     MyYield("Waiting for dialog to open");
     while (app.ActiveMenus.Length == 0) {
         MyYield("Waiting for dialog to open");
     }
 
+    MyYield("Clicking direction button");
     // TODO: Add more error catching for the following code:
     CGameMenu@ activeMenus = app.ActiveMenus[0];
     CGameMenuFrame@ currentFrame = activeMenus.CurrentFrame;
