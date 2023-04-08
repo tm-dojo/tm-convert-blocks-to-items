@@ -13,7 +13,13 @@ class TreeBlock : TreeNode {
         }
         UI::SameLine();
         if (block.errorMessage != "") {
-            if (UI::Button("Ex. Manual###export-manual-" + name)) {
+            bool clicked = UI::Button("Manual###export-retry-" + name);
+            if (UI::IsItemHovered()) {
+                UI::BeginTooltip();
+                UI::Text("Manual export, hover over the block after it's placed.");
+                UI::EndTooltip();
+            }
+            if (clicked) {
                 this.ExportWithManualMouse();
             }
             UI::SameLine();
@@ -178,7 +184,13 @@ class TreeNode {
         }
         UI::SameLine();
         if (erroredBlocks > 0) {
-            if (UI::Button("Ex. Manual###export-manual-" + name)) {
+            bool clicked = UI::Button("Manual###export-retry-" + name);
+            if (UI::IsItemHovered()) {
+                UI::BeginTooltip();
+                UI::Text("Manual export, hover over the blocks after they are placed.");
+                UI::EndTooltip();
+            }
+            if (clicked) {
                 this.ExportWithManualMouse();
             }
             UI::SameLine();

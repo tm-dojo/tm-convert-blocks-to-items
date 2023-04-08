@@ -26,7 +26,7 @@ void RenderInterface() {
     if (windowOpen && UI::Begin("Blocks To Items", windowOpen)) {
         if (blockExportTree.root !is null) {
             auto root = blockExportTree.root;
-            UI::Text("Total blocks: " + root.totalBlocks + " (without blacklisted: " + (root.totalBlocks - root.blacklistedBlocks) + ")");
+            UI::Text("Total blocks: " + root.totalBlocks);
             UI::Text("Total blacklisted: " + root.blacklistedBlocks);
             float exportProgress = 0.0;
             if (root.totalBlocks - root.blacklistedBlocks > 0) {
@@ -47,14 +47,11 @@ void RenderInterface() {
             UpdateAllBlocks();
         }
         UI::SameLine();
-        if (UI::Button("Reset blocks")) {
+        if (UI::Button("Clear blocks")) {
             ResetBlocks();
         }
-        UI::SameLine();
-        if (UI::Button("Set item path")) {
-            auto app = GetApp();
-            app.BasicDialogs.String = "Test path";
-        }
+
+        UI::Separator();
 
         blockExportTree.RenderInterface();
 
