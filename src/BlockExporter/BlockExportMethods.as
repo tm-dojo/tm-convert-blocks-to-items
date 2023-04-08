@@ -79,7 +79,19 @@ void ConvertMultipleBlockToItemCoroutine(ref@ refHandle) {
     ConvertMultipleBlockToItemCoroutineHandle handle = cast<ConvertMultipleBlockToItemCoroutineHandle>(refHandle);
     // TODO: Use queueing system to convert blocks
     for (uint i = 0; i < handle.blocks.Length; i++) {
-        ConvertBlockToItem(handle.blocks[i]);
+        try {
+            ConvertBlockToItem(handle.blocks[i]);
+        } catch {
+            string exception = getExceptionInfo();
+            if (!IsBlockException(exception)) {
+                throw(exception);
+            }
+            
+            string blockExceptionMessage = RemoveBlockExceptionPrefix(exception);
+            error("Block export failed: " + blockExceptionMessage);
+
+            handle.blocks[i].errorMessage = blockExceptionMessage;
+        }
     }
 }
 
@@ -94,6 +106,8 @@ void ConvertBlockToItemCoroutine(ref@ refHandle) {
 void ConvertBlockToItem(BlockExportData@ blockExportData) {
     CGameCtnBlockInfo@ block = blockExportData.block;
     string desiredItemLocation = blockExportData.blockFileExportPath;
+
+    // ThrowBlockException("Failed to click block");
     
     // Click screen at position to enter "create new item" UI
     auto xClick = screenWidth / 2;

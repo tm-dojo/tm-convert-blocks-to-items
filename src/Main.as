@@ -97,6 +97,7 @@ class BlockExportData {
     string blockFileExportPath;
 
     bool exported = false;
+    string errorMessage = "";
 
     BlockExportData() {}
     BlockExportData(CGameCtnBlockInfo@ block, string blockFolder) {

@@ -10,19 +10,28 @@ class TreeBlock : TreeNode {
         }
         UI::SameLine();
         if (UI::Button("Check###check-" + name)) {
-            this.CheckBlockExportPaths();
+            this.UpdateNodeInfo();
         }
         UI::SameLine();
 
+        bool pushedColor = false;
         if (block.exported) {
             UI::PushStyleColor(UI::Col::Text, vec4(0.0, 1.0, 0.0, 1.0));
+            pushedColor = true;
+        } else if (block.errorMessage != "") {
+            UI::PushStyleColor(UI::Col::Text, vec4(1.0, 0.0, 0.0, 1.0));
+            pushedColor = true;
         }
 
-        if (UI::TreeNode(Icons::Cube + " " + name, UI::TreeNodeFlags::Leaf)) {
-            block.block.Icon;
+        string nodeText = Icons::Cube + " " + name;
+        if (block.errorMessage != "") {
+            nodeText += " (" + block.errorMessage + ")";
+        }
+        if (UI::TreeNode(nodeText, UI::TreeNodeFlags::Leaf)) {
             UI::TreePop();
         }
-        if (block.exported) {
+
+        if (pushedColor) {
             UI::PopStyleColor();
         }
     }
@@ -33,13 +42,18 @@ class TreeBlock : TreeNode {
     }
 
     // Checks the export path of this block and updates the exported flag
-    void CheckBlockExportPaths() override {
+    void UpdateNodeInfo() override {
         block.exported = ConfirmBlockExport(block);
     }
 
     // As a leaf node, this block will return 1 or 0 depending on whether the block is exported
     int NumExportedBlocks() override {
         return block.exported ? 1 : 0;
+    }    
+    
+    // As a leaf node, this block will return 1 or 0 depending on whether the block is errored
+    int NumErroredBlocks() override {
+        return block.errorMessage != "" ? 1 : 0;
     }
 }
 
@@ -52,6 +66,7 @@ class TreeNode {
     // Accumulated member variables
     int totalBlocks = 0;
     int exportedBlocks = 0;
+    int erroredBlocks = 0;
 
     TreeNode(string name) {
         this.name = name;
@@ -120,7 +135,7 @@ class TreeNode {
 
         // Check exports button
         if (UI::Button("Check###check-" + name)) {
-            this.CheckBlockExportPaths();
+            this.UpdateNodeInfo();
         }
         UI::SameLine();
 
@@ -136,8 +151,12 @@ class TreeNode {
             }
             pushedColor = true;
         }
+        if (erroredBlocks == totalBlocks) {
+            UI::PushStyleColor(UI::Col::Text, vec4(1.0, 0.0, 0.0, 1.0));
+            pushedColor = true;
+        }
 
-        if (UI::TreeNode(name + " (" + exportedBlocks + "/" + totalBlocks + ")")) {
+        if (UI::TreeNode(name + " (" + exportedBlocks + "/" + totalBlocks + " exported, " + erroredBlocks +" errors)")) {
             // Temporarily push previous color to children
             UI::PushStyleColor(UI::Col::Text, prevColor);
             for (uint i = 0; i < children.Length; i++) {
@@ -175,20 +194,23 @@ class TreeNode {
     }
     
     // Recursively check all children if the blocks are exported at the export path
-    void CheckBlockExportPaths() {
+    void UpdateNodeInfo() {
         for (uint i = 0; i < children.Length; i++) {
-            if (children[i] is null) continue;
-            children[i].CheckBlockExportPaths();
+            if (children[i] !is null) {
+                children[i].UpdateNodeInfo();
+            }
         }
         UpdateNumExportedBlocks();
+        UpdateNumErroredBlocks();
     }
 
     // Recursively update all children's total number of exported blocks
     void UpdateNumExportedBlocks() {
         exportedBlocks = NumExportedBlocks();
         for (int i = 0; i < children.Length; i++) {
-            if (children[i] is null) continue;
-            children[i].UpdateNumExportedBlocks();
+            if (children[i] !is null) {
+                children[i].UpdateNumExportedBlocks();
+            }
         }
     }
 
@@ -196,9 +218,32 @@ class TreeNode {
     int NumExportedBlocks() {
         int totalExportedBlocks = 0;
         for (uint i = 0; i < children.Length; i++) {
-            if (children[i] is null) continue;
-            totalExportedBlocks += children[i].NumExportedBlocks();
+            if (children[i] !is null) {
+                totalExportedBlocks += children[i].NumExportedBlocks();
+            }
         }
         return totalExportedBlocks;
+    }
+
+
+    // Recursively update all children's total number of errored blocks
+    void UpdateNumErroredBlocks() {
+        erroredBlocks = NumErroredBlocks();
+        for (int i = 0; i < children.Length; i++) {
+            if (children[i] !is null) {
+                children[i].UpdateNumErroredBlocks();
+            }
+        }
+    }
+
+    // Recursively count all exported blocks in children
+    int NumErroredBlocks() {
+        int totalErroredBlocks = 0;
+        for (uint i = 0; i < children.Length; i++) {
+            if (children[i] !is null) {
+                totalErroredBlocks += children[i].NumErroredBlocks();
+            }
+        }
+        return totalErroredBlocks;
     }
 }
