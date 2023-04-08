@@ -157,7 +157,9 @@ void ConvertBlockToItem(BlockExportData@ blockExportData, bool moveMouseManually
             sleep(10);
             mousePosFun.Call(xClick + 10, yClick);
         }
-        if (Time::Now - startBlockPick > TIME_TO_PICK_BLOCK) {
+        // Change time limit depending on whether we are moving the mouse manually
+        auto timeLimit = moveMouseManually ? TIME_TO_PICK_BLOCK_MANUAL : TIME_TO_PICK_BLOCK;
+        if (Time::Now - startBlockPick > timeLimit) {
             ThrowBlockException("Failed to pick block in time (" + TIME_TO_PICK_BLOCK + "ms)");
         }
         MyYield("Waiting for picked block to be the correct block");
