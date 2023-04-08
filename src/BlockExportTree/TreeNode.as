@@ -62,6 +62,7 @@ class TreeNode {
     string name;
     BlockExportData@ block;
     array<TreeNode@> children;
+    TreeNode@ parent;
 
     // Accumulated member variables
     int totalBlocks = 0;
@@ -97,6 +98,7 @@ class TreeNode {
     // Add node to children
     void AddChildNode(TreeNode@ node) {
         if (node is null) return;
+        @node.parent = this;
         children.InsertLast(node);
     }
 
@@ -156,7 +158,8 @@ class TreeNode {
             pushedColor = true;
         }
 
-        if (UI::TreeNode(name + " (" + exportedBlocks + "/" + totalBlocks + " exported, " + erroredBlocks +" errors)")) {
+        string nodeText = name + " (" + exportedBlocks + "/" + totalBlocks + " exported, " + erroredBlocks +" errors)";
+        if (UI::TreeNode(nodeText)) {
             // Temporarily push previous color to children
             UI::PushStyleColor(UI::Col::Text, prevColor);
             for (uint i = 0; i < children.Length; i++) {
