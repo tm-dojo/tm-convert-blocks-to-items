@@ -74,13 +74,14 @@ array<BlockExportData@> FindAllBlocksInEditorInventory()
 
 class ConvertMultipleBlockToItemCoroutineHandle {
     array<BlockExportData@> blocks;
+    bool moveMouseManually = false;
 }
 void ConvertMultipleBlockToItemCoroutine(ref@ refHandle) {
     ConvertMultipleBlockToItemCoroutineHandle handle = cast<ConvertMultipleBlockToItemCoroutineHandle>(refHandle);
     // TODO: Use queueing system to convert blocks
     for (uint i = 0; i < handle.blocks.Length; i++) {
         try {
-            ConvertBlockToItem(handle.blocks[i]);
+            ConvertBlockToItem(handle.blocks[i], handle.moveMouseManually);
             
             handle.blocks[i].exported = ConfirmBlockExport(handle.blocks[i]);
             handle.blocks[i].errorMessage = "";
@@ -110,7 +111,7 @@ void ConvertBlockToItemCoroutine(ref@ refHandle) {
     ConvertBlockToItem(handle.blockExportData);
 }
 
-void ConvertBlockToItem(BlockExportData@ blockExportData) {
+void ConvertBlockToItem(BlockExportData@ blockExportData, bool moveMouseManually = false) {
     CGameCtnBlockInfo@ block = blockExportData.block;
     string desiredItemLocation = blockExportData.blockFileExportPath;
 
@@ -124,18 +125,16 @@ void ConvertBlockToItem(BlockExportData@ blockExportData) {
     auto app = GetApp();
     auto editor = cast<CGameCtnEditorCommon@>(app.Editor);
     auto pmt = editor.PluginMapType;
-    auto placeLocation = int3(20, 15, 20);
-
-    MyYield("Setting place mode to block");
-    pmt.PlaceMode = CGameEditorPluginMap::EPlaceMode::Block;
+    
+    MyYield("Setting up camera");
+    pmt.CameraTargetPosition = vec3(655, 98, 655);
+    pmt.CameraHAngle = 0.5;
+    pmt.CameraVAngle = 0.5;
+    pmt.CameraToTargetDistance = 20;
 
     MyYield("Placing block");
-    // @pmt.CursorBlockModel = block;
-    // int nBlocks = pmt.Blocks.Length;
-    // while(nBlocks == pmt.Blocks.Length) {
-    //     clickFun.Call(true, xClick, yClick);
-    //     MyYield("Attempting to place block");
-    // }
+    auto placeLocation = int3(20, 20, 20);
+    pmt.RemoveAll();
     pmt.PlaceGhostBlock(block, placeLocation, CGameEditorPluginMap::ECardinalDirections::North);
 
     MyYield("Block placed, attempting to click button open item editor UI");
@@ -145,7 +144,18 @@ void ConvertBlockToItem(BlockExportData@ blockExportData) {
     editor.ButtonItemCreateFromBlockModeOnClick();
 
     MyYield("Waiting for picked block to be the correct block");
+    auto start = Time::Now;
     while (editor.PickedBlock is null || editor.PickedBlock.BlockModel.Id.GetName() != block.Id.GetName()) {
+        if (!moveMouseManually) {
+            mousePosFun.Call(xClick, yClick);
+            sleep(10);
+            mousePosFun.Call(xClick + 5, yClick);
+            sleep(10);
+            mousePosFun.Call(xClick + 10, yClick);
+        }
+        if (Time::Now - start > 1000) {
+            ThrowBlockException("Failed to pick block in time");
+        }
         MyYield("Waiting for picked block to be the correct block");
     }
 

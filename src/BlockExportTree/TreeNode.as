@@ -2,6 +2,8 @@ class TreeBlock : TreeNode {
     TreeBlock(string name, BlockExportData@ block) {
         super(name);
         @this.block = block;
+        this.exportedBlocks = block.exported ? 1 : 0;
+        this.erroredBlocks = block.errorMessage != "" ? 1 : 0;
     }
 
     void RenderInterface() override {
@@ -9,6 +11,12 @@ class TreeBlock : TreeNode {
             this.Export();
         }
         UI::SameLine();
+        if (block.errorMessage != "") {
+            if (UI::Button("Ex. Manual###export-manual-" + name)) {
+                this.ExportWithManualMouse();
+            }
+            UI::SameLine();
+        }
 
         bool pushedColor = false;
         if (block.exported) {
@@ -150,6 +158,12 @@ class TreeNode {
             this.Export();
         }
         UI::SameLine();
+        if (erroredBlocks > 0) {
+            if (UI::Button("Ex. Manual###export-manual-" + name)) {
+                this.ExportWithManualMouse();
+            }
+            UI::SameLine();
+        }
 
         // Render node and children
         vec4 prevColor = UI::GetStyleColor(UI::Col::Text);
@@ -191,8 +205,12 @@ class TreeNode {
         }
     }
 
+    void ExportWithManualMouse() {
+        this.Export(true);
+    }
+
     // Collect all blocks in children and start export on all those blocks
-    void Export() {
+    void Export(bool moveMouseManually = false) {
         array<BlockExportData@> allBlocks = GetAllBlocks();
 
         // Remove all block that have already been exported
@@ -207,6 +225,7 @@ class TreeNode {
 
         ConvertMultipleBlockToItemCoroutineHandle@ handle = cast<ConvertMultipleBlockToItemCoroutineHandle>(ConvertMultipleBlockToItemCoroutineHandle());
         handle.blocks = blocksToExport;
+        handle.moveMouseManually = moveMouseManually;
         startnew(ConvertMultipleBlockToItemCoroutine, handle);
     }
 
