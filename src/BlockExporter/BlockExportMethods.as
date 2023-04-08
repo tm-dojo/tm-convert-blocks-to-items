@@ -143,7 +143,9 @@ void ConvertBlockToItem(BlockExportData@ blockExportData, bool moveMouseManually
     // TODO: Checking for error of "Can't convert this block into a custom block." can be caught
     // In app.ActiveMenus, the menus go from 0 to 1 if this error appears. So we can check 
     // the first menu and look for the string "Can't convert this block into a custom block." or some ID
-    editor.ButtonItemCreateFromBlockModeOnClick();
+    if (pmt.EditMode != CGameEditorPluginMap::EditMode::Pick) {
+        editor.ButtonItemCreateFromBlockModeOnClick();
+    }
 
     MyYield("Waiting for picked block to be the correct block");
     auto startBlockPick = Time::Now;
