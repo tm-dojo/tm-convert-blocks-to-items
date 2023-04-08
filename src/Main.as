@@ -8,6 +8,7 @@ void UpdateAllBlocks() {
 
     blocks = FindAllBlocksInEditorInventory();    
     blockExportTree = BlockExportTree(blocks);
+    blockExportTree.PropagateBlacklist(blacklistStr);
 }
 
 void ResetBlocks() {
@@ -23,7 +24,25 @@ void RenderMenu() {
 
 void RenderInterface() {
     if (windowOpen && UI::Begin("Blocks To Items", windowOpen)) {
-        UI::Text("Total blocks: " + blocks.Length);
+        if (blockExportTree.root !is null) {
+            auto root = blockExportTree.root;
+            UI::Text("Total blocks: " + root.totalBlocks + " (without blacklisted: " + (root.totalBlocks - root.blacklistedBlocks) + ")");
+            UI::Text("Total blacklisted: " + root.blacklistedBlocks);
+            float exportProgress = 0.0;
+            if (root.totalBlocks - root.blacklistedBlocks > 0) {
+                exportProgress = float(root.exportedBlocks) / (float(root.totalBlocks) - float(root.blacklistedBlocks));
+            }
+            exportProgress = Math::Round(exportProgress * 10000) / 10000;
+            UI::Text("Export progress: " + root.exportedBlocks + "/" + (root.totalBlocks - root.blacklistedBlocks) + " (" + (exportProgress * 100) + "%)");
+        }
+
+        blacklistStr = UI::InputText("Blacklist (comma separated)", blacklistStr, blacklistChanged);
+        if (blacklistChanged) {
+            blockExportTree.PropagateBlacklist(blacklistStr);
+        }
+
+        UI::Separator();
+
         if (UI::Button("Refresh blocks")) {
             UpdateAllBlocks();
         }
@@ -78,6 +97,8 @@ void RenderInterface() {
 }
 
 bool windowOpen = true;
+string blacklistStr = "";
+bool blacklistChanged = false;
 array<BlockExportData@> blocks;
 BlockExportTree blockExportTree;
 
@@ -98,6 +119,8 @@ class BlockExportData {
 
     bool exported = false;
     string errorMessage = "";
+
+    bool blacklisted = false;
 
     BlockExportData() {}
     BlockExportData(CGameCtnBlockInfo@ block, string blockFolder) {

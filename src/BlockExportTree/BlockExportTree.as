@@ -1,3 +1,18 @@
+
+array<string> ParseBlackListString(string blacklistStr) {
+    auto split = blacklistStr.Split(",");
+
+    array<string> blacklistItems;
+    for (uint i = 0; i < split.Length; i++) {
+        auto trimmed = split[i].Trim();
+        if (trimmed.Length > 0) {
+            blacklistItems.InsertLast(trimmed);
+        }
+    }
+
+    return blacklistItems;
+}
+
 class BlockExportTree {
     TreeNode@ root = TreeNode("Root");
     
@@ -35,5 +50,10 @@ class BlockExportTree {
 
         print("Found node: " + blockNode.name);
         blockNode.NotifyBlockChange(block);
+    }
+
+    void PropagateBlacklist(string blacklistStr) {
+        array<string> blacklistItems = ParseBlackListString(blacklistStr);                
+        root.PropagateBlacklistItems(blacklistItems);
     }
 }

@@ -4,6 +4,7 @@ class TreeBlock : TreeNode {
         @this.block = block;
         this.exportedBlocks = block.exported ? 1 : 0;
         this.erroredBlocks = block.errorMessage != "" ? 1 : 0;
+        this.blacklistedBlocks = block.blacklisted ? 1 : 0;
     }
 
     void RenderInterface() override {
@@ -24,6 +25,9 @@ class TreeBlock : TreeNode {
             pushedColor = true;
         } else if (block.errorMessage != "") {
             UI::PushStyleColor(UI::Col::Text, vec4(1.0, 0.0, 0.0, 1.0));
+            pushedColor = true;
+        } else if (block.blacklisted) {
+            UI::PushStyleColor(UI::Col::Text, vec4(0.2, 0.2, 0.2, 1.0));
             pushedColor = true;
         }
 
@@ -46,11 +50,25 @@ class TreeBlock : TreeNode {
     }
 
     void NotifyBlockChange(BlockExportData@ block) override {
-        exportedBlocks = block.exported ? 1 : 0;
-        erroredBlocks = block.errorMessage != "" ? 1 : 0;
+        this.exportedBlocks = block.exported ? 1 : 0;
+        this.erroredBlocks = block.errorMessage != "" ? 1 : 0;
+        this.blacklistedBlocks = block.blacklisted ? 1 : 0;
         
         if (parent !is null) {
             parent.NotifyBlockChange(block);
+        }
+    }
+
+    void PropagateBlacklistItems(array<string> blacklistItems) override {
+        if (this.block !is null) {
+            block.blacklisted = false;
+            for (int i = 0; i < blacklistItems.Length; i++) {
+                if (name.ToLower().Contains(blacklistItems[i].ToLower())) {
+                    block.blacklisted = true;
+                    break;
+                }
+            }            
+            this.blacklistedBlocks = block.blacklisted ? 1 : 0;
         }
     }
 }
@@ -66,6 +84,7 @@ class TreeNode {
     int totalBlocks = 0;
     int exportedBlocks = 0;
     int erroredBlocks = 0;
+    int blacklistedBlocks = 0;
 
     // Remember tree open/close state
     bool wasOpen = false;
@@ -169,20 +188,22 @@ class TreeNode {
         vec4 prevColor = UI::GetStyleColor(UI::Col::Text);
 
         bool pushedColor = false;
-        if (exportedBlocks > 0) {
+         if (blacklistedBlocks == totalBlocks) {
+            UI::PushStyleColor(UI::Col::Text, vec4(0.2, 0.2, 0.2, 1.0));
+            pushedColor = true;
+        } else if (exportedBlocks > 0) {
             if (exportedBlocks == totalBlocks) {
                 UI::PushStyleColor(UI::Col::Text, vec4(0.0, 1.0, 0.0, 1.0));
             } else {
                 UI::PushStyleColor(UI::Col::Text, vec4(1.0, 1.0, 0.0, 1.0));
             }
             pushedColor = true;
-        }
-        if (erroredBlocks == totalBlocks) {
+        } else if (erroredBlocks == totalBlocks) {
             UI::PushStyleColor(UI::Col::Text, vec4(1.0, 0.0, 0.0, 1.0));
             pushedColor = true;
         }
 
-        string nodeText = name + " (" + exportedBlocks + "/" + totalBlocks + " exported, " + erroredBlocks +" errors)";
+        string nodeText = name + " (" + exportedBlocks + "/" + (totalBlocks - blacklistedBlocks) + " exported, " + erroredBlocks +" errors, " + blacklistedBlocks + " blacklisted)";
         if (UI::TreeNode(nodeText, wasOpen ? UI::TreeNodeFlags::DefaultOpen : UI::TreeNodeFlags::None)) {
             wasOpen = true;
 
@@ -216,7 +237,7 @@ class TreeNode {
         // Remove all block that have already been exported
         array<BlockExportData@> blocksToExport;
         for (int i = 0; i < allBlocks.Length; i++) {
-            if (!allBlocks[i].exported) {
+            if (!allBlocks[i].exported && !allBlocks[i].blacklisted) {
                 blocksToExport.InsertLast(allBlocks[i]);
             }
         }
@@ -232,17 +253,37 @@ class TreeNode {
     void NotifyBlockChange(BlockExportData@ block) {
         int newExportedBlocks = 0;
         int newErroredBlocks = 0;
+        int newBlacklistedBlocks = 0;
+
         for (int i = 0; i < children.Length; i++) {
             if (children[i] !is null) {
                 newExportedBlocks += children[i].exportedBlocks;
                 newErroredBlocks += children[i].erroredBlocks;
+                newBlacklistedBlocks += children[i].blacklistedBlocks;
             }
         }
         exportedBlocks = newExportedBlocks;
         erroredBlocks = newErroredBlocks;
+        blacklistedBlocks = newBlacklistedBlocks;
 
         if (parent !is null) {
             parent.NotifyBlockChange(block);
         }
+    }
+
+    void PropagateBlacklistItems(array<string> blacklistItems) {
+        for (int i = 0; i < children.Length; i++) {
+            if (children[i] !is null) {
+                children[i].PropagateBlacklistItems(blacklistItems);
+            }
+        }
+        
+        int newBlacklistedBlocks = 0;
+        for (int i = 0; i < children.Length; i++) {
+            if (children[i] !is null) {
+                newBlacklistedBlocks += children[i].blacklistedBlocks;
+            }
+        }
+        blacklistedBlocks = newBlacklistedBlocks;
     }
 }
