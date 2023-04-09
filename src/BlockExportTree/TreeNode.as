@@ -233,7 +233,7 @@ class TreeNode {
             UI::PushStyleColor(UI::Col::Text, vec4(0.2, 0.2, 0.2, 1.0));
             pushedColor = true;
         } else if (exportedBlocks > 0) {
-            if (exportedBlocks == totalBlocks) {
+            if (exportedBlocks == (totalBlocks - blacklistedBlocks)) {
                 UI::PushStyleColor(UI::Col::Text, vec4(0.0, 1.0, 0.0, 1.0));
             } else {
                 UI::PushStyleColor(UI::Col::Text, vec4(1.0, 1.0, 0.0, 1.0));
