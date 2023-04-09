@@ -60,7 +60,7 @@ void RenderInterface() {
 }
 
 bool windowOpen = true;
-string blacklistStr = "";
+string blacklistStr = "water, roadicecheckpoint, roadicewithwallcheckpoint, roadicewithwalldiagleftcheckpoint, roadicewithwalldiagrightcheckpoint, roadicestart, roadicefinish, roadicemultilap, roadicewithwallmultilap, roadicewithwalldiagleftmultilap, roadicewithwalldiagrightmultilap";
 bool blacklistChanged = false;
 array<BlockExportData@> blocks;
 BlockExportTree blockExportTree;
