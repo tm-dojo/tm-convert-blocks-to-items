@@ -56,9 +56,11 @@ class TreeBlock : TreeNode {
     }
 
     void NotifyBlockChange(BlockExportData@ block) override {
-        this.exportedBlocks = block.exported ? 1 : 0;
-        this.erroredBlocks = block.errorMessage != "" ? 1 : 0;
-        this.blacklistedBlocks = block.blacklisted ? 1 : 0;
+        if (block !is null) {
+            this.exportedBlocks = block.exported ? 1 : 0;
+            this.erroredBlocks = block.errorMessage != "" ? 1 : 0;
+            this.blacklistedBlocks = block.blacklisted ? 1 : 0;
+        }
         
         if (parent !is null) {
             parent.NotifyBlockChange(block);
@@ -313,5 +315,9 @@ class TreeNode {
             }
         }
         blacklistedBlocks = totalBlocks;
+
+        if (parent !is null) {
+            parent.NotifyBlockChange(null);
+        }
     }
 }
