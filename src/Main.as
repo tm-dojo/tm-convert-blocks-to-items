@@ -55,40 +55,6 @@ void RenderInterface() {
 
         blockExportTree.RenderInterface();
 
-        // if (UI::BeginTable("blocks", 5)) {
-        //     UI::TableSetupColumn("", UI::TableColumnFlags::WidthFixed | UI::TableColumnFlags::NoSort);
-        //     UI::TableSetupColumn("Blacklist", UI::TableColumnFlags::WidthFixed);
-        //     UI::TableSetupColumn("Exported", UI::TableColumnFlags::WidthFixed);
-        //     UI::TableSetupColumn("Block Name", UI::TableColumnFlags::WidthFixed);   
-        //     UI::TableSetupColumn("Block Item Path", UI::TableColumnFlags::WidthFixed);   
-        //     UI::TableHeadersRow();
-        //     for (uint i = 0; i < blocks.Length; i++) {
-        //         UI::TableNextRow();
-        //         UI::TableSetColumnIndex(0);
-        //         bool buttonClicked = UI::Button("Export" + "###" + i);
-        //         if(UI::IsItemHovered()) {
-        //             UI::BeginTooltip();
-        //             UI::Text("Export to: " + blocks[i].blockFileExportPath);
-        //             UI::EndTooltip();
-        //         }
-        //         if(buttonClicked) {
-        //             print("Exporting " + blocks[i].block.Name);
-        //             ConvertBlockToItemHandle@ handle = cast<ConvertBlockToItemHandle>(ConvertBlockToItemHandle());
-        //             handle.blockExportData = blocks[i];
-        //             startnew(ConvertBlockToItemCoroutine, handle);
-        //         }
-        //         UI::TableSetColumnIndex(1);
-        //         UI::Text("no");
-        //         UI::TableSetColumnIndex(2);
-        //         UI::Text("no");
-        //         UI::TableSetColumnIndex(3);
-        //         UI::Text(blocks[i].block.Name);
-        //         UI::TableSetColumnIndex(4);
-        //         UI::Text(blocks[i].blockItemPath);
-        //     }            
-        //     UI::EndTable();
-        // }
-
         UI::End();
     }
 }
