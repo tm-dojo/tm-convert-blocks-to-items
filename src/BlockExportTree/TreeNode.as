@@ -1,3 +1,16 @@
+void ClickedBlockNode(BlockExportData@ block) {
+    if (block is null) return;
+
+    auto app = GetApp();
+    if (app is null) return;
+    auto editor = cast<CGameCtnEditorCommon@>(app.Editor);
+    if (editor is null) return;
+    auto pmt = editor.PluginMapType;
+    if (pmt is null) return;
+
+    @pmt.CursorBlockModel = block.block;
+}
+
 class TreeBlock : TreeNode {
     TreeBlock(string name, BlockExportData@ block) {
         super(name);
@@ -42,6 +55,9 @@ class TreeBlock : TreeNode {
             nodeText += " (" + block.errorMessage + ")";
         }
         if (UI::TreeNode(nodeText, UI::TreeNodeFlags::Leaf)) {
+            if (UI::IsItemClicked()) {
+                ClickedBlockNode(block);
+            }
             UI::TreePop();
         }
 
