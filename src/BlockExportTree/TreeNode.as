@@ -1,4 +1,4 @@
-void ClickedBlockNode(BlockExportData@ block) {
+void OnClickBlockNode(BlockExportData@ block) {
     if (block is null) return;
 
     auto app = GetApp();
@@ -7,6 +7,10 @@ void ClickedBlockNode(BlockExportData@ block) {
     if (editor is null) return;
     auto pmt = editor.PluginMapType;
     if (pmt is null) return;
+
+    if (pmt.PlaceMode != CGameEditorPluginMap::EPlaceMode::Block) {
+        pmt.PlaceMode = CGameEditorPluginMap::EPlaceMode::Block;
+    }
 
     @pmt.CursorBlockModel = block.block;
 }
@@ -56,7 +60,7 @@ class TreeBlock : TreeNode {
         }
         if (UI::TreeNode(nodeText, UI::TreeNodeFlags::Leaf)) {
             if (UI::IsItemClicked()) {
-                ClickedBlockNode(block);
+                OnClickBlockNode(block);
             }
             UI::TreePop();
         }
