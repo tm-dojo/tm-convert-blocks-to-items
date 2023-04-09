@@ -2,6 +2,14 @@ void Main() {
     InitializeBlockExporter();
 }
 
+VirtualKey ABORT_KEY = VirtualKey::B;
+void OnKeyPress(bool down, VirtualKey key) {
+    if (key == ABORT_KEY && down) {
+        UI::ShowNotification("Aborting block exporter after next block...");
+        abortExporting = true;
+    }
+}
+
 void UpdateAllBlocks() {
     bool initLib = InitializeLib();
     if(!initLib) return;

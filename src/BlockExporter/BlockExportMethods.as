@@ -13,6 +13,8 @@ int screenHeight = 1;
 int2 ICON_BUTTON_POS = int2(594, 557);
 int2 ICON_DIRECTION_BUTTON_POS = int2(1311, 736);
 
+bool abortExporting = false;
+
 array<vec3> POTENTIAL_CAMERA_SETTINGS = {
     vec3(Math::ToRad(45), Math::ToRad(45), 20),
     vec3(Math::ToRad(135), Math::ToRad(45), 20),
@@ -121,6 +123,17 @@ void ConvertMultipleBlockToItemCoroutine(ref@ refHandle) {
         
         // Notify block export tree that block has changed
         blockExportTree.NotifyBlockChange(handle.blocks[i]);
+
+        UI::ShowNotification(
+            "Exported block: " + (i + 1) + "/" + handle.blocks.Length + " (press " + tostring(ABORT_KEY) + " to abort)", 
+            1000
+        );
+
+        if (abortExporting) {
+            UI::ShowNotification("Stopped exporting blocks", 5000);
+            abortExporting = false;
+            break;
+        }
     }
 }
 
