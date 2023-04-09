@@ -165,6 +165,7 @@ void ConvertBlockToItem(BlockExportData@ blockExportData, bool moveMouseManually
         MyYield("Waiting for picked block to be the correct block");
     }
 
+    MyYield("Waiting for item editor UI to open");
     auto startOpenItemEditor = Time::Now;
     while (cast<CGameEditorItem>(app.Editor) is null) {
         @editor = cast<CGameCtnEditorCommon@>(app.Editor);
@@ -173,6 +174,15 @@ void ConvertBlockToItem(BlockExportData@ blockExportData, bool moveMouseManually
         }
         if (Time::Now - startOpenItemEditor > TIME_TO_OPEN_ITEM_EDITOR) {
             ThrowBlockException("Failed to open item editor in time (" + TIME_TO_OPEN_ITEM_EDITOR + "ms)");
+        }
+        // This is most likely the "Cannot convert this block into an item." error, abort
+        if (app.ActiveMenus.Length > 0) {
+            MyYield("Cannot convert this block to an item, aborting...");
+            MyYield("Clicking OK on error dialog");
+            app.BasicDialogs.Message_Ok();
+            MyYield("Removing all blocks");
+            pmt.RemoveAll();
+            ThrowBlockException("Cannot convert this block into an item");
         }
         MyYield("Waiting for item editor UI to open");
     }
