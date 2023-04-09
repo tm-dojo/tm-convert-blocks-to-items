@@ -77,6 +77,13 @@ class TreeBlock : TreeNode {
             this.blacklistedBlocks = block.blacklisted ? 1 : 0;
         }
     }
+
+    void Blacklist() override {
+        if (this.block !is null) {
+            block.blacklisted = true;
+            this.blacklistedBlocks = 1;
+        }
+    }
 }
 
 class TreeNode {
@@ -297,5 +304,14 @@ class TreeNode {
             }
         }
         blacklistedBlocks = newBlacklistedBlocks;
+    }
+
+    void Blacklist() {
+        for (int i = 0; i < children.Length; i++) {
+            if (children[i] !is null) {
+                children[i].Blacklist();
+            }
+        }
+        blacklistedBlocks = totalBlocks;
     }
 }

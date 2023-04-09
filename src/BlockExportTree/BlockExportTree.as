@@ -53,7 +53,15 @@ class BlockExportTree {
     }
 
     void PropagateBlacklist(string blacklistStr) {
-        array<string> blacklistItems = ParseBlackListString(blacklistStr);                
+        array<string> blacklistItems = ParseBlackListString(blacklistStr);
         root.PropagateBlacklistItems(blacklistItems);
+
+        // Blacklist nodes with direct nodes in blacklist
+        for (int i = 0; i < blacklistItems.Length; i++) {
+            auto node = root.FindNodeAtPath(blacklistItems[i]);
+            if (node !is null) {
+                node.Blacklist();
+            }
+        }
     }
 }

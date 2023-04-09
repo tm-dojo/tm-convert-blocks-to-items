@@ -36,7 +36,10 @@ void RenderInterface() {
             UI::Text("Export progress: " + root.exportedBlocks + "/" + (root.totalBlocks - root.blacklistedBlocks) + " (" + (exportProgress * 100) + "%)");
         }
 
-        blacklistStr = UI::InputText("Blacklist (comma separated)", blacklistStr, blacklistChanged);
+        UI::Separator();
+
+        UI::Text("Blacklist (string or folder, comma separated):");
+        blacklistStr = UI::InputText("##", blacklistStr, blacklistChanged);
         if (blacklistChanged) {
             blockExportTree.PropagateBlacklist(blacklistStr);
         }
@@ -60,7 +63,7 @@ void RenderInterface() {
 }
 
 bool windowOpen = true;
-string blacklistStr = "water, roadicecheckpoint, roadicewithwallcheckpoint, roadicewithwalldiagleftcheckpoint, roadicewithwalldiagrightcheckpoint, roadicestart, roadicefinish, roadicemultilap, roadicewithwallmultilap, roadicewithwalldiagleftmultilap, roadicewithwalldiagrightmultilap";
+string blacklistStr = "water, Nadeo/RoadIce/Racing";
 bool blacklistChanged = false;
 array<BlockExportData@> blocks;
 BlockExportTree blockExportTree;
