@@ -11,6 +11,14 @@ void UpdateAllBlocks() {
     blockExportTree.PropagateBlacklist(blacklistStr);
 }
 
+void GoToEditor() {
+    auto app = cast<CGameManiaPlanet>(GetApp());
+    if (app is null) return;
+    app.ManiaTitleControlScriptAPI.EditNewMap2(
+        "Stadium", "48x48Day", "", "CarSport", "", false, "", ""
+    );
+}
+
 void ResetBlocks() {
     blocks = {};
     blockExportTree = BlockExportTree();
@@ -45,6 +53,12 @@ void RenderInterface() {
         }
 
         UI::Separator();
+
+        if (GetApp().RootMap is null) {
+            if (UI::Button("Go To Editor")) {
+                GoToEditor();
+            }
+        }
 
         if (UI::Button("Refresh blocks")) {
             UpdateAllBlocks();
