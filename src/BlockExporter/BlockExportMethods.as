@@ -13,6 +13,27 @@ int screenHeight = 1;
 int2 ICON_BUTTON_POS = int2(594, 557);
 int2 ICON_DIRECTION_BUTTON_POS = int2(1311, 736);
 
+array<vec3> POTENTIAL_CAMERA_SETTINGS = {
+    vec3(Math::ToRad(45), Math::ToRad(45), 20),
+    vec3(Math::ToRad(135), Math::ToRad(45), 20),
+    vec3(Math::ToRad(225), Math::ToRad(45), 20),
+    vec3(Math::ToRad(315), Math::ToRad(45), 20),
+    vec3(Math::ToRad(0),   Math::ToRad(90), 20),
+    vec3(Math::ToRad(90),  Math::ToRad(90), 20),
+    vec3(Math::ToRad(180), Math::ToRad(90), 20),
+    vec3(Math::ToRad(270), Math::ToRad(90), 20),
+    vec3(Math::ToRad(0),   Math::ToRad(0), 20),
+    vec3(Math::ToRad(90),  Math::ToRad(0), 20),
+    vec3(Math::ToRad(180), Math::ToRad(0), 20),
+    vec3(Math::ToRad(270), Math::ToRad(0), 20)
+};
+
+void SetCamSetting(CGameEditorPluginMapMapType@ pmt, vec3 camSetting) {    
+    pmt.CameraHAngle = camSetting.x;
+    pmt.CameraVAngle = camSetting.y;
+    pmt.CameraToTargetDistance = camSetting.z;
+}
+
 bool InitializeLib() {
     @lib = GetZippedLibrary("lib/libclick.dll");
 
@@ -126,11 +147,6 @@ void ConvertBlockToItem(BlockExportData@ blockExportData, bool moveMouseManually
     auto editor = cast<CGameCtnEditorCommon@>(app.Editor);
     auto pmt = editor.PluginMapType;
     
-    MyYield("Setting up camera");
-    pmt.CameraTargetPosition = vec3(655, 98, 655);
-    pmt.CameraHAngle = 0.5;
-    pmt.CameraVAngle = 0.5;
-    pmt.CameraToTargetDistance = 20;
 
     MyYield("Removing all blocks");
     pmt.RemoveAll();
@@ -147,10 +163,19 @@ void ConvertBlockToItem(BlockExportData@ blockExportData, bool moveMouseManually
         editor.ButtonItemCreateFromBlockModeOnClick();
     }
 
+    MyYield("Setting up camera");
+    pmt.CameraTargetPosition = vec3(655, 98, 655);
+    int curCamIndex = 0;
+
     MyYield("Waiting for picked block to be the correct block");
     auto startBlockPick = Time::Now;
     while (editor.PickedBlock is null || editor.PickedBlock.BlockModel.Id.GetName() != block.Id.GetName()) {
         if (!moveMouseManually) {
+            MyYield("Trying camera angle " + (curCamIndex + 1));
+            vec3 curCamSetting = POTENTIAL_CAMERA_SETTINGS[curCamIndex];
+            SetCamSetting(pmt, curCamSetting);
+            curCamIndex = (curCamIndex + 1) % POTENTIAL_CAMERA_SETTINGS.Length;
+            
             mousePosFun.Call(xClick, yClick);
             sleep(10);
             mousePosFun.Call(xClick + 5, yClick);
