@@ -85,7 +85,7 @@ void RenderInterface() {
 }
 
 bool windowOpen = true;
-string blacklistStr = "water, Nadeo/RoadIce/Racing";
+string blacklistStr = "water, Nadeo/RoadIce/Racing, StageDiagIn.Item.Gbx, StageCurve1Out.Item.Gbx, StageCurve2Out.Item.Gbx, StageCurve3Out.Item.Gbx, StageCurve1In.Item.Gbx, StageCurve2In.Item.Gbx, StageCurve3In.Item.Gbx";
 bool blacklistChanged = false;
 array<BlockExportData@> blocks;
 BlockExportTree blockExportTree;
