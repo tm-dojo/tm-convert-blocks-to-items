@@ -77,6 +77,15 @@ void RenderInterface() {
         }
 
         UI::Separator();
+        if (UI::Button("Preload Block FIDs")) {
+            PreloadBlockFIDs();
+        }
+        UI::SameLine();
+        if (UI::Button("Preload Item FIDs")) {
+            PreloadItemFIDs();
+        }
+
+        UI::Separator();
 
         blockExportTree.RenderInterface();
 
@@ -150,4 +159,39 @@ array<BlockExportData@> FindAllBlocks(CGameCtnArticleNodeDirectory@ parentNode, 
         }
     }
     return blocks;
+}
+
+array<CGameItemModel@> FindAllItems(CGameCtnArticleNodeDirectory@ parentNode, string folder = "")
+{
+    array<CGameItemModel@> items;
+    for(uint i = 0; i < parentNode.ChildNodes.Length; i++) {
+        auto node = parentNode.ChildNodes[i];
+        if(node.IsDirectory) {
+            auto childItems = FindAllItems(cast<CGameCtnArticleNodeDirectory@>(node), folder + node.Name + '/');
+            for(uint j = 0; j < childItems.Length; j++) {
+                items.InsertLast(childItems[j]);
+            }
+        } else {
+            auto ana = cast<CGameCtnArticleNodeArticle@>(node);
+
+            if (ana.Name.StartsWith("BlockToItemExports\\")) continue;
+
+            if(ana.Article is null || ana.Article.IdName.ToLower().EndsWith("customblock")) {
+                warn("Block: " + ana.Name + " is not nadeo, skipping");
+                continue;
+            }
+
+            auto item = cast<CGameItemModel@>(ana.Article.LoadedNod);
+            if(item is null) {
+                warn("Block " + ana.Name + " is null!");
+                continue;
+            }
+
+            // string blockFolder = folder + ana.Name;
+
+            // auto blockInfo = BlockExportData(item, blockFolder);
+            items.InsertLast(item);
+        }
+    }
+    return items;
 }

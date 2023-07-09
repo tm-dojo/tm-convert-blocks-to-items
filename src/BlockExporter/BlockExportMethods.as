@@ -95,6 +95,38 @@ array<BlockExportData@> FindAllBlocksInEditorInventory()
     return blocks;
 }
 
+array<CGameItemModel@> FindAllItemsInEditorInventory()
+{
+    auto app = GetApp();
+    if (app is null) {
+        warn("app is null");
+        return {};
+    }
+    auto editor = cast<CGameCtnEditorCommon@>(app.Editor);
+    if (editor is null) {
+        warn("app.Editor is null");
+        return {};
+    }
+    auto pmt = editor.PluginMapType;
+    if (editor is null) {
+        warn("editor.PluginMapType is null");
+        return {};
+    }
+    auto inventory = pmt.Inventory;
+    if (inventory is null) {
+        warn("pmt.Inventory is null");
+        return {};
+    }
+    
+    if (inventory.RootNodes.Length == 0) {
+        warn("inventory.RootNodes is empty");
+        return {};
+    }
+    auto itemsNode = cast<CGameCtnArticleNodeDirectory@>(inventory.RootNodes[3]);
+    auto blocks = FindAllItems(itemsNode);
+    return blocks;
+}
+
 class ConvertMultipleBlockToItemCoroutineHandle {
     array<BlockExportData@> blocks;
     bool moveMouseManually = false;
