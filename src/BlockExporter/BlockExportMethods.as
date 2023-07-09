@@ -340,6 +340,49 @@ void ConvertBlockToItem(BlockExportData@ blockExportData, bool moveMouseManually
 }
 
 
+class PlaceAndRemoveBlocksCoroutineHandle {
+    array<BlockExportData@> blocks;
+}
+void PlaceAndRemoveBlocksCoroutine(ref@ refHandle) {
+    PlaceAndRemoveBlocksCoroutineHandle handle = cast<PlaceAndRemoveBlocksCoroutineHandle>(refHandle);
+
+    auto blocks = handle.blocks;
+
+    for (uint i = 0; i < blocks.Length; i++) {
+        PlaceAndRemoveBlock(blocks[i]);
+
+        UI::ShowNotification(
+            "Placed block: " + (i + 1) + "/" + handle.blocks.Length, 
+            1000
+        );
+    }
+}
+
+void PlaceAndRemoveBlock(BlockExportData@ blockExportData) {
+    CGameCtnBlockInfo@ block = blockExportData.block;
+
+    auto app = GetApp();
+    auto editor = cast<CGameCtnEditorCommon@>(app.Editor);
+    auto pmt = editor.PluginMapType;    
+
+    MyYield("Clearing all blocks before placing");
+    pmt.RemoveAll();
+
+    uint blocksBefore = editor.Challenge.Blocks.Length;
+
+    MyYield("Placing ghost block: " + block.IdName);
+    auto placeLocation = int3(20, 20, 20);
+    pmt.PlaceGhostBlock(block, placeLocation, CGameEditorPluginMap::ECardinalDirections::North);
+
+    MyYield("Block placed: " + block.IdName);
+    while(editor.Challenge.Blocks.Length == blocksBefore) {
+        MyYield("Waiting for block to be placed");
+    }
+
+    MyYield("Removing all blocks after placing");
+    pmt.RemoveAll();
+}
+
 void MyYield() {
     yield();
 }

@@ -212,6 +212,10 @@ class TreeNode {
             this.Export();
         }
         UI::SameLine();
+        if (UI::Button("Place + Remove###place+remove-" + name)) {
+            this.PlaceAndRemoveBlocks();
+        }
+        UI::SameLine();
         if (erroredBlocks > 0) {
             bool clicked = UI::Button("Manual###export-retry-" + name);
             if (UI::IsItemHovered()) {
@@ -289,6 +293,15 @@ class TreeNode {
         handle.blocks = blocksToExport;
         handle.moveMouseManually = moveMouseManually;
         startnew(ConvertMultipleBlockToItemCoroutine, handle);
+    }
+
+    void PlaceAndRemoveBlocks() {
+        array<BlockExportData@> allBlocks = GetAllBlocks();
+
+        PlaceAndRemoveBlocksCoroutineHandle@ handle = cast<PlaceAndRemoveBlocksCoroutineHandle>(PlaceAndRemoveBlocksCoroutineHandle());
+        handle.blocks = allBlocks;
+
+        startnew(PlaceAndRemoveBlocksCoroutine, handle);
     }
 
     void NotifyBlockChange(BlockExportData@ block) {
