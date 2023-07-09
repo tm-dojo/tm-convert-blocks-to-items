@@ -6,4 +6,4 @@ category = "Map Editor"
 version = "1.0.0"
 
 [script]
-timeout = 10000
+timeout = 30000
