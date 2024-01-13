@@ -17,7 +17,11 @@ Clone this repository in the Openplanet folder located at C:\Users\[User]\Openpl
 
 The script needs the game to be fullscreen, and you will need to edit the code of the [ClickPos() function](https://github.com/tm-dojo/tm-convert-blocks-to-items/blob/master/src/BlockExporter/BlockExportMethods.as#L53) to match your screen resolution
 
-Go in map editor (advanced, keyboard)
+Go in map editor, create a new map (advanced, keyboard)
+
+⚠️**Warning**⚠️: The script will move the mouse in the center of the screen and hover each block in order to export it
+Make sure there is nothing blocking the mouse from hovering the blocks, including the plugin window itself
+![mouse area](https://i.imgur.com/q8nRUdl.jpeg)
 
 This script is not signed, so make sure to enter the "Developer" signature mode in the Openplanet settings, else, this plugin will not show up in the Openplanet plugin list
 
